@@ -111,6 +111,11 @@ endif()
 # Third-Party Library Configuration
 # ==============================================================================
 
+# Temporarily disable module scanning for third-party libraries to avoid
+# CMake trying to scan their compiler feature tests as modules
+set(CMAKE_CXX_SCAN_FOR_MODULES_BACKUP ${CMAKE_CXX_SCAN_FOR_MODULES})
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 # Enable C++ module support for third-party libraries
 set(FMT_MODULE ON CACHE BOOL "Build fmt as a C++ module" FORCE)
 set(NLOHMANN_JSON_BUILD_MODULES ON CACHE BOOL "Build nlohmann_json C++ module" FORCE)
@@ -119,6 +124,9 @@ set(NLOHMANN_JSON_BUILD_MODULES ON CACHE BOOL "Build nlohmann_json C++ module" F
 add_subdirectory(3rdparty/fmt)
 add_subdirectory(3rdparty/nlohmann_json)
 add_subdirectory(3rdparty/asio)
+
+# Re-enable module scanning for our library
+set(CMAKE_CXX_SCAN_FOR_MODULES ${CMAKE_CXX_SCAN_FOR_MODULES_BACKUP})
 
 # Find OpenSSL for asio/ssl support
 find_package(OpenSSL REQUIRED)

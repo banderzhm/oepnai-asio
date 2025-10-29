@@ -41,6 +41,7 @@ jobs:
           -T ClangCL `
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
           -DOPENSSL_ROOT_DIR="C:/Program Files/OpenSSL-Win64" `
+          -DCMAKE_CXX_SCAN_FOR_MODULES=ON `
           -S ${{ github.workspace }}
 
     - name: Build
