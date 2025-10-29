@@ -1,0 +1,39 @@
+# Conda build configuration for openai-asio
+
+# Compiler requirements
+c_compiler:
+  - clang        # [unix]
+  - vs2022       # [win]
+
+cxx_compiler:
+  - clangxx      # [unix]
+  - vs2022       # [win]
+
+# Compiler versions
+c_compiler_version:    # [unix]
+  - 19                 # [linux]
+  - 20                 # [linux]
+  - 21                 # [linux]
+  - 15                 # [osx]
+
+cxx_compiler_version:  # [unix]
+  - 19                 # [linux]
+  - 20                 # [linux]
+  - 21                 # [linux]
+  - 15                 # [osx]
+
+# Standard library
+cxx_standard:
+  - 23
+
+# Build type
+cmake_build_type:
+  - Release
+
+# Pin versions
+pin_run_as_build:
+  openssl:
+    max_pin: x.x
+  fmt:
+    max_pin: x
+

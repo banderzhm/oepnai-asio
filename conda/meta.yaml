@@ -1,0 +1,74 @@
+{% set name = "openai-asio" %}
+{% set version = "1.0.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  git_url: https://github.com/banderzhm/oepnai-asio.git
+  git_rev: v{{ version }}
+  git_depth: 1
+  recursive: true
+
+build:
+  number: 0
+  skip: true  # [py<38]
+  # C++23 required, only available on newer compilers
+  skip: true  # [osx and arm64]
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake >=4.0
+    - ninja  # [not win]
+    - {{ compiler('c') }}
+  host:
+    - openssl >=3.0
+    - fmt >=10.0
+    - nlohmann_json >=3.11
+  run:
+    - openssl >=3.0
+    - fmt >=10.0
+
+test:
+  commands:
+    # Test that the library was installed
+    - test -f $PREFIX/lib/libopenai_asio_core.a  # [unix]
+    - if not exist %LIBRARY_LIB%\\openai_asio_core.lib exit 1  # [win]
+    
+    # Test that headers/modules were installed
+    - test -d $PREFIX/include/openai-asio  # [unix]
+    - if not exist %LIBRARY_INC%\\openai-asio exit 1  # [win]
+    
+    # Test CMake config files
+    - test -f $PREFIX/lib/cmake/openai-asio/openai-asio-config.cmake  # [unix]
+    - if not exist %LIBRARY_LIB%\\cmake\\openai-asio\\openai-asio-config.cmake exit 1  # [win]
+
+about:
+  home: https://github.com/banderzhm/oepnai-asio
+  license: MIT
+  license_file: LICENSE
+  summary: 'OpenAI API Client with Asio - Modern C++23 library with coroutines and modules'
+  description: |
+    OpenAI-Asio is a modern C++23 library that provides an asynchronous OpenAI API client
+    built on top of Asio. It features:
+    
+    - Full C++23 coroutines support
+    - C++20 modules for better compilation times
+    - Asynchronous I/O with Asio
+    - Type-safe API using modern C++ features
+    - Support for all OpenAI API endpoints
+    
+    Requirements:
+    - C++23 compatible compiler (Clang 19+, MSVC 19.40+, GCC 13+)
+    - CMake 4.0 or higher
+    - OpenSSL 3.0 or higher
+  
+  doc_url: https://github.com/banderzhm/oepnai-asio/blob/main/README.md
+  dev_url: https://github.com/banderzhm/oepnai-asio
+
+extra:
+  recipe-maintainers:
+    - banderzhm
+

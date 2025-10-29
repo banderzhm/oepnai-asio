@@ -1,0 +1,29 @@
+@PACKAGE_INIT@
+
+# openai-asio CMake configuration file
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies
+find_dependency(OpenSSL REQUIRED)
+find_dependency(fmt REQUIRED)
+find_dependency(nlohmann_json REQUIRED)
+
+# Include targets
+if(NOT TARGET openai-asio::openai_asio_core)
+    include("${CMAKE_CURRENT_LIST_DIR}/openai-asio-targets.cmake")
+endif()
+
+# Create main library alias
+if(NOT TARGET openai-asio::openai-asio)
+    add_library(openai-asio::openai-asio ALIAS openai-asio::openai_asio_core)
+endif()
+
+# Set variables for downstream projects
+set(OPENAI_ASIO_FOUND TRUE)
+set(OPENAI_ASIO_VERSION "@PROJECT_VERSION@")
+set(OPENAI_ASIO_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+set(OPENAI_ASIO_LIBRARIES openai-asio::openai_asio_core)
+
+check_required_components(openai-asio)
+

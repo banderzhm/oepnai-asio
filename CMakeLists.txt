@@ -194,11 +194,17 @@ else()
 endif()
 
 # Link third-party libraries to core library
-# Note: asio::asio already includes OpenSSL::SSL and OpenSSL::Crypto with ASIO_USE_SSL defined
+# Add OpenSSL include directories
+target_include_directories(openai_asio_core SYSTEM PRIVATE
+    ${OPENSSL_INCLUDE_DIR}
+)
+
 target_link_libraries(openai_asio_core PUBLIC
     fmt::fmt
     nlohmann_json_modules
     asio::asio
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
 
 # Windows platform requires network libraries
@@ -227,6 +233,73 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/example/CMakeLists.txt")
     add_subdirectory(example)
     message(STATUS "Examples enabled in example/ directory")
 endif()
+
+# ==============================================================================
+# Installation Configuration
+# ==============================================================================
+
+# Install library
+install(TARGETS openai_asio_core
+    EXPORT openai-asio-targets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    FILE_SET cxx_modules DESTINATION lib/cxx/miu
+)
+
+# Install third-party libraries
+install(TARGETS fmt nlohmann_json_modules asio
+    EXPORT openai-asio-targets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+# Install module files
+install(DIRECTORY src/
+    DESTINATION include/openai-asio/modules
+    FILES_MATCHING 
+    PATTERN "*.cppm"
+    PATTERN "*.ixx"
+)
+
+# Create and install package configuration files
+include(CMakePackageConfigHelpers)
+
+# Generate package config file
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/openai-asio-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/openai-asio-config.cmake"
+    INSTALL_DESTINATION lib/cmake/openai-asio
+)
+
+# Generate package version file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/openai-asio-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# Install CMake config files
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/openai-asio-config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/openai-asio-config-version.cmake"
+    DESTINATION lib/cmake/openai-asio
+)
+
+# Install targets file
+install(EXPORT openai-asio-targets
+    FILE openai-asio-targets.cmake
+    NAMESPACE openai-asio::
+    DESTINATION lib/cmake/openai-asio
+)
+
+# Install license and readme
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE"
+    "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+    DESTINATION share/openai-asio
+)
 
 # ==============================================================================
 # Build Summary
