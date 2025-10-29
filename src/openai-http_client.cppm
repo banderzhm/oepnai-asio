@@ -3,8 +3,8 @@
 
 module;
 
-// Include OpenSSL headers for SSL macros
-#include <openssl/ssl.h>
+// Include Asio SSL headers (asio module doesn't export SSL components)
+#include <asio/ssl.hpp>
 
 export module openai.http_client;
 

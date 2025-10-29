@@ -2,7 +2,8 @@
 
 module;
 
-#include <openssl/ssl.h>
+// Include Asio SSL headers (asio module doesn't export SSL components)
+#include <asio/ssl.hpp>
 
 module openai.http_client;
 
