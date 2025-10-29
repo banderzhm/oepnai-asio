@@ -1,5 +1,9 @@
 // HTTP Client Module - Implementation
 
+module;  // 全局模块片段
+
+#include <openssl/ssl.h>
+
 module openai.http_client;
 
 import asio;
