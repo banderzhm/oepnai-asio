@@ -21,22 +21,17 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install OpenSSL
+    - name: Install OpenSSL via vcpkg
+      shell: pwsh
       run: |
-        choco install openssl -y
+        Write-Host "Installing OpenSSL using vcpkg..."
+        Write-Host "VCPKG_ROOT: $env:VCPKG_INSTALLATION_ROOT"
         
-    - name: Verify OpenSSL Installation
-      run: |
-        if (Test-Path "C:/Program Files/OpenSSL-Win64") {
-          Write-Host "OpenSSL found at: C:/Program Files/OpenSSL-Win64"
-          Get-ChildItem "C:/Program Files/OpenSSL-Win64"
-        } elseif (Test-Path "C:/Program Files/OpenSSL") {
-          Write-Host "OpenSSL found at: C:/Program Files/OpenSSL"
-          Get-ChildItem "C:/Program Files/OpenSSL"
-        } else {
-          Write-Host "Searching for OpenSSL..."
-          Get-ChildItem "C:/Program Files" | Where-Object {$_.Name -like "*OpenSSL*"}
-        }
+        # Install OpenSSL using vcpkg (recommended by GitHub)
+        vcpkg install openssl:x64-windows-static-md
+        
+        # Set environment variable for CMake
+        echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
 
     - name: Install CMake 4.0+
       run: |
@@ -46,27 +41,14 @@ jobs:
     - name: Configure CMake
       shell: pwsh
       run: |
-        # Auto-detect OpenSSL path
-        $openssl_path = if (Test-Path "C:/Program Files/OpenSSL-Win64") {
-          "C:/Program Files/OpenSSL-Win64"
-        } elseif (Test-Path "C:/Program Files/OpenSSL") {
-          "C:/Program Files/OpenSSL"
-        } else {
-          $null
-        }
-        
-        if ($null -eq $openssl_path) {
-          Write-Error "OpenSSL not found!"
-          exit 1
-        }
-        
-        Write-Host "Using OpenSSL at: $openssl_path"
+        Write-Host "VCPKG_ROOT: $env:VCPKG_ROOT"
         
         cmake -B "${{ github.workspace }}/build" `
           -G "Visual Studio 17 2022" `
           -A x64 `
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-          -DOPENSSL_ROOT_DIR="$openssl_path" `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static-md `
           -S "${{ github.workspace }}"
 
     - name: Build
