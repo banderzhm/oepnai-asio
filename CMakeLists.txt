@@ -111,6 +111,10 @@ endif()
 # Third-Party Library Configuration
 # ==============================================================================
 
+# Find OpenSSL BEFORE adding asio (asio needs it to enable SSL support)
+find_package(OpenSSL REQUIRED)
+message(STATUS "OpenSSL found: ${OPENSSL_VERSION}")
+
 # Temporarily disable module scanning for third-party libraries to avoid
 # CMake trying to scan their compiler feature tests as modules
 set(CMAKE_CXX_SCAN_FOR_MODULES_BACKUP ${CMAKE_CXX_SCAN_FOR_MODULES})
@@ -119,19 +123,16 @@ set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 # Enable C++ module support for third-party libraries
 set(FMT_MODULE ON CACHE BOOL "Build fmt as a C++ module" FORCE)
 set(NLOHMANN_JSON_BUILD_MODULES ON CACHE BOOL "Build nlohmann_json C++ module" FORCE)
+# SSL support for Asio module (default is ON, but explicitly set for clarity)
+set(ASIO_ENABLE_SSL ON CACHE BOOL "Enable SSL support for ASIO module" FORCE)
 
 # Add third-party libraries
 add_subdirectory(3rdparty/fmt)
 add_subdirectory(3rdparty/nlohmann_json)
-add_subdirectory(3rdparty/asio)
+add_subdirectory(3rdparty/asio)  # This will use OpenSSL and set ASIO_USE_SSL internally
 
 # Re-enable module scanning for our library
 set(CMAKE_CXX_SCAN_FOR_MODULES ${CMAKE_CXX_SCAN_FOR_MODULES_BACKUP})
-
-# Find OpenSSL for asio/ssl support
-find_package(OpenSSL REQUIRED)
-
-add_definitions(-DASIO_USE_SSL)
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -192,21 +193,12 @@ else()
     message(WARNING "Standard library modules not configured. Module support may be limited.")
 endif()
 
-# Define ASIO_USE_SSL to enable SSL support in Asio module
-target_compile_definitions(openai_asio_core PUBLIC ASIO_USE_SSL)
-
 # Link third-party libraries to core library
-# Add OpenSSL include directories
-target_include_directories(openai_asio_core SYSTEM PRIVATE
-    ${OPENSSL_INCLUDE_DIR}
-)
-
+# Note: asio::asio already includes OpenSSL::SSL and OpenSSL::Crypto with ASIO_USE_SSL defined
 target_link_libraries(openai_asio_core PUBLIC
     fmt::fmt
     nlohmann_json_modules
     asio::asio
-    OpenSSL::SSL
-    OpenSSL::Crypto
 )
 
 # Windows platform requires network libraries
