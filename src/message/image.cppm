@@ -27,6 +27,33 @@ struct ImageGenerationRequest {
     std::string to_json() const;
 };
 
+// Image edit request
+struct ImageEditRequest {
+    std::string image_path;         // Path to image to edit (PNG, < 4MB, square)
+    std::string prompt;              // Text description of desired image
+    std::optional<std::string> mask; // Path to mask image (optional)
+    std::optional<std::string> model{"dall-e-2"};
+    std::optional<int> n{1};
+    std::optional<std::string> size{"1024x1024"};
+    std::optional<std::string> response_format{"url"};
+    std::optional<std::string> user;
+    
+    std::vector<char> image_content;  // Image content (alternative to path)
+    std::vector<char> mask_content;   // Mask content (alternative to path)
+};
+
+// Image variation request  
+struct ImageVariationRequest {
+    std::string image_path;          // Path to image (PNG, < 4MB, square)
+    std::optional<std::string> model{"dall-e-2"};
+    std::optional<int> n{1};
+    std::optional<std::string> response_format{"url"};
+    std::optional<std::string> size{"1024x1024"};
+    std::optional<std::string> user;
+    
+    std::vector<char> image_content;  // Image content (alternative to path)
+};
+
 // Image data
 struct ImageData {
     std::string url;

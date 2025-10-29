@@ -36,13 +36,17 @@ public:
 
     // Image Generation API
     asio::awaitable<ImageResponse> generate_image(const ImageGenerationRequest& request);
+    asio::awaitable<ImageResponse> edit_image(const ImageEditRequest& request);
+    asio::awaitable<ImageResponse> create_image_variation(const ImageVariationRequest& request);
 
     // Embeddings API
     asio::awaitable<EmbeddingResponse> create_embedding(const EmbeddingRequest& request);
 
     // Files API
+    asio::awaitable<FileUploadResponse> upload_file(const FileUploadRequest& request);
     asio::awaitable<FileListResponse> list_files();
     asio::awaitable<FileObject> retrieve_file(const std::string& file_id);
+    asio::awaitable<FileContentResponse> retrieve_file_content(const std::string& file_id);
     asio::awaitable<bool> delete_file(const std::string& file_id);
 
     // Fine-tuning API
@@ -57,6 +61,50 @@ public:
 
     // Moderation API
     asio::awaitable<ModerationResponse> create_moderation(const ModerationRequest& request);
+
+    // Assistants API (Beta)
+    asio::awaitable<Assistant> create_assistant(const CreateAssistantRequest& request);
+    asio::awaitable<AssistantListResponse> list_assistants(int limit = 20);
+    asio::awaitable<Assistant> retrieve_assistant(const std::string& assistant_id);
+    asio::awaitable<Assistant> modify_assistant(const std::string& assistant_id, 
+                                                  const ModifyAssistantRequest& request);
+    asio::awaitable<DeleteAssistantResponse> delete_assistant(const std::string& assistant_id);
+
+    // Threads API (Beta)
+    asio::awaitable<Thread> create_thread(const CreateThreadRequest& request);
+    asio::awaitable<Thread> retrieve_thread(const std::string& thread_id);
+    asio::awaitable<Thread> modify_thread(const std::string& thread_id, 
+                                           const ModifyThreadRequest& request);
+    asio::awaitable<DeleteThreadResponse> delete_thread(const std::string& thread_id);
+
+    // Messages API (Beta)
+    asio::awaitable<ThreadMessage> create_message(const std::string& thread_id,
+                                                    const CreateMessageRequest& request);
+    asio::awaitable<ThreadMessageListResponse> list_messages(const std::string& thread_id,
+                                                               int limit = 20);
+    asio::awaitable<ThreadMessage> retrieve_message(const std::string& thread_id,
+                                                      const std::string& message_id);
+    asio::awaitable<ThreadMessage> modify_message(const std::string& thread_id,
+                                                    const std::string& message_id,
+                                                    const ModifyMessageRequest& request);
+
+    // Runs API (Beta)
+    asio::awaitable<Run> create_run(const std::string& thread_id,
+                                     const CreateRunRequest& request);
+    asio::awaitable<RunListResponse> list_runs(const std::string& thread_id, int limit = 20);
+    asio::awaitable<Run> retrieve_run(const std::string& thread_id,
+                                       const std::string& run_id);
+    asio::awaitable<Run> modify_run(const std::string& thread_id,
+                                     const std::string& run_id,
+                                     const ModifyRunRequest& request);
+    asio::awaitable<Run> cancel_run(const std::string& thread_id,
+                                     const std::string& run_id);
+    asio::awaitable<RunStepListResponse> list_run_steps(const std::string& thread_id,
+                                                          const std::string& run_id,
+                                                          int limit = 20);
+    asio::awaitable<RunStep> retrieve_run_step(const std::string& thread_id,
+                                                 const std::string& run_id,
+                                                 const std::string& step_id);
 
 private:
     void add_auth_headers(http::Request& req);

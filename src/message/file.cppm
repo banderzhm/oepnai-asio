@@ -8,8 +8,16 @@ import std;
 export namespace openai {
 
 // ============================================================================
-// FILES API - Response Types
+// FILES API - Request & Response Types
 // ============================================================================
+
+// File upload request
+struct FileUploadRequest {
+    std::string file_path;          // Local file path
+    std::string purpose;             // "fine-tune", "assistants", etc.
+    std::vector<char> file_content;  // File content (alternative to file_path)
+    std::string filename;            // Filename (when using file_content)
+};
 
 // File object
 struct FileObject {
@@ -20,12 +28,23 @@ struct FileObject {
     std::string filename;
     std::string purpose;
     std::string status;
+    std::string status_details;
 };
 
 // File list response
 struct FileListResponse {
     std::string object;
     std::vector<FileObject> data;
+    bool is_error{false};
+    std::string error_message;
+};
+
+// File upload response
+using FileUploadResponse = FileObject;
+
+// File content response
+struct FileContentResponse {
+    std::string content;
     bool is_error{false};
     std::string error_message;
 };

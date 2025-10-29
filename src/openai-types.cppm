@@ -13,3 +13,6 @@ export import openai.types.file;
 export import openai.types.fine_tuning;
 export import openai.types.audio;
 export import openai.types.moderation;
+export import openai.types.assistant;
+export import openai.types.thread;
+export import openai.types.run;
