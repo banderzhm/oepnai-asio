@@ -22,9 +22,12 @@ export module openai;
 // Re-export all sub-modules
 export import openai.http_client;
 export import openai.types;
-export import openai.client;
+
+// Import the new modular client architecture
+export import openai.client.unified;
 
 // Re-export commonly used namespaces
 export namespace openai {
     // All types and classes from sub-modules are automatically available
+    // Client class is now composed from specialized API clients
 }
