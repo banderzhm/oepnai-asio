@@ -131,6 +131,8 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ${CMAKE_CXX_SCAN_FOR_MODULES_BACKUP})
 # Find OpenSSL for asio/ssl support
 find_package(OpenSSL REQUIRED)
 
+add_definitions(-DASIO_USE_SSL)
+
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nlohmann_json/include)
@@ -189,6 +191,9 @@ elseif(WIN32 AND LIBCXX_MODULE_DIRS)
 else()
     message(WARNING "Standard library modules not configured. Module support may be limited.")
 endif()
+
+# Define ASIO_USE_SSL to enable SSL support in Asio module
+target_compile_definitions(openai_asio_core PUBLIC ASIO_USE_SSL)
 
 # Link third-party libraries to core library
 # Add OpenSSL include directories

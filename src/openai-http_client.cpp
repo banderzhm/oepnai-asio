@@ -1,10 +1,5 @@
 // HTTP Client Module - Implementation
 
-module;
-
-// Include Asio SSL headers (asio module doesn't export SSL components)
-#include <asio/ssl.hpp>
-
 module openai.http_client;
 
 import asio;

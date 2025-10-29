@@ -1,11 +1,6 @@
 // HTTP Client Module
 // Provides async HTTP/HTTPS client with coroutine support
 
-module;
-
-// Include Asio SSL headers (asio module doesn't export SSL components)
-#include <asio/ssl.hpp>
-
 export module openai.http_client;
 
 import asio;
