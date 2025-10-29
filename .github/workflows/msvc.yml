@@ -24,6 +24,19 @@ jobs:
     - name: Install OpenSSL
       run: |
         choco install openssl -y
+        
+    - name: Verify OpenSSL Installation
+      run: |
+        if (Test-Path "C:/Program Files/OpenSSL-Win64") {
+          Write-Host "OpenSSL found at: C:/Program Files/OpenSSL-Win64"
+          Get-ChildItem "C:/Program Files/OpenSSL-Win64"
+        } elseif (Test-Path "C:/Program Files/OpenSSL") {
+          Write-Host "OpenSSL found at: C:/Program Files/OpenSSL"
+          Get-ChildItem "C:/Program Files/OpenSSL"
+        } else {
+          Write-Host "Searching for OpenSSL..."
+          Get-ChildItem "C:/Program Files" | Where-Object {$_.Name -like "*OpenSSL*"}
+        }
 
     - name: Install CMake 4.0+
       run: |
@@ -31,13 +44,30 @@ jobs:
         cmake --version
 
     - name: Configure CMake
+      shell: pwsh
       run: |
-        cmake -B ${{ github.workspace }}/build `
+        # Auto-detect OpenSSL path
+        $openssl_path = if (Test-Path "C:/Program Files/OpenSSL-Win64") {
+          "C:/Program Files/OpenSSL-Win64"
+        } elseif (Test-Path "C:/Program Files/OpenSSL") {
+          "C:/Program Files/OpenSSL"
+        } else {
+          $null
+        }
+        
+        if ($null -eq $openssl_path) {
+          Write-Error "OpenSSL not found!"
+          exit 1
+        }
+        
+        Write-Host "Using OpenSSL at: $openssl_path"
+        
+        cmake -B "${{ github.workspace }}/build" `
           -G "Visual Studio 17 2022" `
           -A x64 `
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-          -DOPENSSL_ROOT_DIR="C:/Program Files/OpenSSL-Win64" `
-          -S ${{ github.workspace }}
+          -DOPENSSL_ROOT_DIR="$openssl_path" `
+          -S "${{ github.workspace }}"
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }} -j 2

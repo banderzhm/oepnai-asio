@@ -108,8 +108,8 @@ asio::awaitable<Response> Client::async_https_request(const Request& req) {
 
         auto content_length_it = headers.find("Content-Length");
         if (content_length_it != headers.end()) {
-            size_t content_length = std::stoull(content_length_it->second);
-            size_t remaining = content_length - body_stream.str().size();
+            std::size_t content_length = std::stoull(content_length_it->second);
+            std::size_t remaining = content_length - body_stream.str().size();
             
             if (remaining > 0) {
                 std::vector<char> buffer(remaining);

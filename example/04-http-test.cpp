@@ -32,7 +32,7 @@ asio::awaitable<void> http_test_example(asio::io_context& io_context) {
                     fmt::print("  {}: {}\n", key, value);
                 }
                 fmt::print("\nBody (first 300 chars):\n{}\n", 
-                    response.body.substr(0, std::min(size_t(300), response.body.size())));
+                    response.body.substr(0, std::min(std::size_t(300), response.body.size())));
                 if (response.body.size() > 300) {
                     fmt::print("... (truncated)\n");
                 }
@@ -60,7 +60,7 @@ asio::awaitable<void> http_test_example(asio::io_context& io_context) {
             } else {
                 fmt::print("Status: {}\n", response.status_code);
                 fmt::print("Body (first 300 chars):\n{}\n", 
-                    response.body.substr(0, std::min(size_t(300), response.body.size())));
+                    response.body.substr(0, std::min(std::size_t(300), response.body.size())));
             }
         } catch (const std::exception& e) {
             fmt::print("Exception: {}\n", e.what());

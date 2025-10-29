@@ -52,7 +52,7 @@ asio::awaitable<void> files_example(openai::Client& client, asio::io_context& io
             if (array_end != std::string::npos && array_end - array_start < 5) {
                 fmt::print("  No files found.\n\n");
             } else {
-                fmt::print("{}\n\n", body.substr(0, std::min(size_t(500), body.size())));
+                fmt::print("{}\n\n", body.substr(0, std::min(std::size_t(500), body.size())));
             }
         }
         

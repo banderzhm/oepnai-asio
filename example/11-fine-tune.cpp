@@ -52,7 +52,7 @@ asio::awaitable<void> fine_tune_example(openai::Client& client, asio::io_context
                 fmt::print("  No fine-tuning jobs found.\n\n");
             } else {
                 fmt::print("Jobs found:\n");
-                fmt::print("{}\n\n", body.substr(0, std::min(size_t(800), body.size())));
+                fmt::print("{}\n\n", body.substr(0, std::min(std::size_t(800), body.size())));
             }
         }
         

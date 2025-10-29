@@ -36,7 +36,7 @@ asio::awaitable<void> image_example(openai::Client& client) {
             } else {
                 fmt::print("✓ Image generated successfully!\n");
                 fmt::print("Number of images: {}\n", response.data.size());
-                for (size_t i = 0; i < response.data.size(); ++i) {
+                for (std::size_t i = 0; i < response.data.size(); ++i) {
                     fmt::print("  Image {}: {}\n", i + 1, response.data[i].url);
                 }
                 fmt::print("\n");

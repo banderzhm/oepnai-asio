@@ -33,7 +33,7 @@ Categories checked:
         "You are doing great work! Keep it up!"
     };
     
-    for (size_t i = 0; i < test_inputs.size(); ++i) {
+    for (std::size_t i = 0; i < test_inputs.size(); ++i) {
         fmt::print("--- Test {} ---\n", i + 1);
         fmt::print("Input: \"{}\"\n\n", test_inputs[i]);
         

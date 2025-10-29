@@ -61,7 +61,7 @@ asio::awaitable<void> embedding_example(openai::Client& client, asio::io_context
             if (embedding_pos != std::string::npos) {
                 auto values_start = embedding_pos + 13;
                 auto values_end = body.find("]", values_start);
-                auto sample_values = body.substr(values_start, std::min(size_t(100), values_end - values_start));
+                auto sample_values = body.substr(values_start, std::min(std::size_t(100), values_end - values_start));
                 
                 fmt::print("Embedding vector (first few dimensions):\n");
                 fmt::print("[{}...]\n\n", sample_values);
