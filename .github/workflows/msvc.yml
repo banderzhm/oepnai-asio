@@ -1,0 +1,54 @@
+name: MSVC Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-msvc:
+    runs-on: windows-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release, Debug]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install OpenSSL
+      run: |
+        choco install openssl -y
+
+    - name: Install CMake 4.0+
+      run: |
+        choco install cmake --version=4.1.2 -y --force
+        cmake --version
+
+    - name: Configure CMake
+      run: |
+        cmake -B ${{ github.workspace }}/build `
+          -G "Visual Studio 17 2022" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+          -DOPENSSL_ROOT_DIR="C:/Program Files/OpenSSL-Win64" `
+          -S ${{ github.workspace }}
+
+    - name: Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }} -j 2
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: openai-asio-windows-msvc-${{ matrix.build_type }}
+        path: |
+          ${{ github.workspace }}/build/${{ matrix.build_type }}/*.lib
+          ${{ github.workspace }}/build/${{ matrix.build_type }}/*.exe
+        retention-days: 7
+

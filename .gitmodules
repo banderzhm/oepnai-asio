@@ -1,0 +1,13 @@
+[submodule "3rdparty/asio"]
+	path = 3rdparty/asio
+	url = https://github.com/banderzhm/asio.git
+	branch = module
+[submodule "3rdparty/fmt"]
+	path = 3rdparty/fmt
+	url = https://github.com/fmtlib/fmt.git
+	branch = master
+[submodule "3rdparty/nlohmann_json"]
+	path = 3rdparty/nlohmann_json
+	url = https://github.com/nlohmann/json.git
+	branch = develop
+
