@@ -77,9 +77,10 @@ struct ChatCompletionResponse {
     std::string model;
     std::vector<ChatCompletionChoice> choices;
     ChatCompletionUsage usage;
-    bool is_error{false};
-    std::string error_message;
 };
+
+// Alias for convenience  
+using ChatChoice = ChatCompletionChoice;
 
 } // namespace openai
 

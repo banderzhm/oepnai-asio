@@ -41,8 +41,6 @@ struct EmbeddingResponse {
     std::vector<EmbeddingData> data;
     std::string model;
     EmbeddingUsage usage;
-    bool is_error{false};
-    std::string error_message;
 };
 
 } // namespace openai

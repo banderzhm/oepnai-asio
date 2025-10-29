@@ -28,35 +28,9 @@ A modern OpenAI API client library built with **C++23 coroutines** and **Asio**.
 
 ## 🚀 Quick Start
 
-### Installation Options
+### Building from Source
 
-#### Option 1: Using vcpkg (Recommended)
-
-```bash
-# Install via vcpkg
-vcpkg install openai-asio
-
-# Or add to your vcpkg.json
-{
-  "dependencies": ["openai-asio"]
-}
-```
-
-See [VCPKG.md](VCPKG.md) for detailed vcpkg usage.
-
-#### Option 2: Using conda
-
-```bash
-# Build and install locally
-conda build conda/
-conda install --use-local openai-asio
-```
-
-See [CONDA.md](CONDA.md) for detailed conda usage.
-
-#### Option 3: Building from Source
-
-##### Windows (PowerShell)
+#### Windows (PowerShell)
 
 ```powershell
 # 1. Clone the repository
@@ -72,14 +46,14 @@ cmake .. -G "Visual Studio 17 2022" -A x64
 cmake --build . --config Release
 ```
 
-##### Linux (Clang with libc++)
+#### Linux (Clang with libc++)
 
 ```bash
 # 1. Install dependencies
 sudo apt install clang-18 libc++-18-dev libssl-dev cmake
 
 # 2. Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/banderzhm/oepnai-asio
 cd openai-asio
 
 # 3. Build
@@ -164,28 +138,18 @@ openai-asio/
 │   ├── asio/                       # Asio async I/O
 │   ├── fmt/                        # Formatting library
 │   └── nlohmann_json/              # JSON library
-├── cmake/                          # CMake configuration files
-│   └── openai-asio-config.cmake.in # Package config template
-├── conda/                          # Conda package recipe
-│   ├── meta.yaml                   # Package metadata
-│   ├── build.sh                    # Linux/macOS build script
-│   ├── bld.bat                     # Windows build script
-│   └── conda_build_config.yaml     # Build configuration
-├── vcpkg.json                      # vcpkg manifest
 ├── CMakeLists.txt                  # CMake configuration
-├── LICENSE                         # MIT License
-├── VCPKG.md                        # vcpkg usage guide
-└── CONDA.md                        # conda usage guide
+└── LICENSE                         # MIT License
 ```
 
-## 🔧 Module Architecture
+## 🔧 Modular Architecture
 
 ```
 import openai;  ← Single import point
     ↓
 openai (main module)
-    ├─→ openai.http_client   (HTTP/HTTPS client)
-    ├─→ openai.types         (Type definitions)
+    ├─→ openai.http_client         (HTTP/HTTPS client)
+    ├─→ openai.types               (Type definitions)
     │    ├─→ openai.types.chat
     │    ├─→ openai.types.completion
     │    ├─→ openai.types.model
@@ -195,24 +159,60 @@ openai (main module)
     │    ├─→ openai.types.fine_tuning
     │    ├─→ openai.types.audio
     │    ├─→ openai.types.moderation
-    │    └─→ openai.types.common
-    └─→ openai.client        (API client)
+    │    ├─→ openai.types.assistant  (Beta)
+    │    ├─→ openai.types.thread     (Beta)
+    │    └─→ openai.types.run        (Beta)
+    └─→ openai.client.unified      (Unified client)
+         ├─→ openai.client.base    (Base client)
+         ├─→ openai.client.model   (Models API)
+         ├─→ openai.client.chat    (Chat API)
+         ├─→ openai.client.image   (Images API)
+         ├─→ openai.client.embedding
+         ├─→ openai.client.completion
+         ├─→ openai.client.moderation
+         ├─→ openai.client.file
+         ├─→ openai.client.fine_tuning
+         ├─→ openai.client.audio
+         ├─→ openai.client.assistant  (Beta)
+         ├─→ openai.client.thread     (Beta)
+         └─→ openai.client.run        (Beta)
 ```
+
+### Architecture Benefits
+
+- 🔹 **Modular Design** - Each API in separate module, compile on demand
+- 🔹 **Fast Compilation** - Module caching, faster incremental builds
+- 🔹 **Easy Maintenance** - Separation of concerns, clear code organization
+- 🔹 **Composition Pattern** - Unified client composes all specialized clients
 
 ## 📚 API Support
 
+### Core APIs
 | API | Status | Description |
 |-----|--------|-------------|
 | Chat Completions | ✅ | Chat completions (GPT-3.5/GPT-4) |
 | Completions | ✅ | Text completions (legacy) |
-| Edits | ✅ | Text edits (deprecated) |
 | Models | ✅ | Model list and information |
-| Images | ✅ | Image generation (DALL-E) |
-| Embeddings | ✅ | Text embeddings |
-| Files | ✅ | File management |
-| Fine-tuning | ✅ | Model fine-tuning |
-| Audio | ✅ | Audio transcription/translation |
+| Images | ✅ | Image generation/editing/variation |
+| Embeddings | ✅ | Text embedding vectors |
 | Moderations | ✅ | Content moderation |
+
+### Advanced APIs
+| API | Status | Description |
+|-----|--------|-------------|
+| Files | ✅ | File upload/list/retrieve/delete |
+| Fine-tuning | ✅ | Fine-tuning job management |
+| Audio | ✅ | Audio transcription/translation (Whisper) |
+
+### Beta APIs
+| API | Status | Description |
+|-----|--------|-------------|
+| Assistants | ✅ | AI assistant creation and management |
+| Threads | ✅ | Conversation thread management |
+| Messages | ✅ | Message CRUD operations |
+| Runs | ✅ | Run management and tool outputs |
+
+**All OpenAI APIs fully implemented!**
 
 ## 🔧 Troubleshooting
 
@@ -237,13 +237,6 @@ Ensure you're using a compiler and CMake version that supports C++23 modules:
 - Clang: 18.0+
 - CMake: 4.0+
 
-## 📦 Package Managers
-
-This project supports multiple package managers:
-
-- **vcpkg**: See [VCPKG.md](VCPKG.md) for installation and usage
-- **conda**: See [CONDA.md](CONDA.md) for conda-forge submission
-
 ## 📄 License
 
 [MIT License](LICENSE)
@@ -260,9 +253,7 @@ Issues and Pull Requests are welcome!
 - [C++23 Modules](https://en.cppreference.com/w/cpp/language/modules)
 - [Asio Documentation](https://think-async.com/Asio/)
 
-### Package Managers
-- [vcpkg Documentation](https://vcpkg.io/)
-- [conda-forge Documentation](https://conda-forge.org/)
+### Build Tools
 - [CMake Modules Guide](https://cmake.org/cmake/help/latest/manual/cmake-cxxmodules.7.html)
 
 ## ⭐ Acknowledgments

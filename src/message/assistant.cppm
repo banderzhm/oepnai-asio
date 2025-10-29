@@ -78,8 +78,6 @@ struct AssistantListResponse {
     std::string first_id;
     std::string last_id;
     bool has_more{false};
-    bool is_error{false};
-    std::string error_message;
 };
 
 // Delete assistant response
@@ -87,8 +85,6 @@ struct DeleteAssistantResponse {
     std::string id;
     std::string object;
     bool deleted{false};
-    bool is_error{false};
-    std::string error_message;
 };
 
 } // namespace openai

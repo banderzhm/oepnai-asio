@@ -42,21 +42,113 @@ public:
         co_return img_response;
     }
 
-    // Edit image (to be implemented with multipart/form-data)
+    // Edit image
     asio::awaitable<ImageResponse> edit_image(const ImageEditRequest& request) {
-        // TODO: Implement multipart/form-data upload
+        std::string boundary = generate_boundary();
+        
+        http::Request req;
+        req.method = "POST";
+        req.host = "api.openai.com";
+        req.path = "/v1/images/edits";
+        req.use_ssl = true;
+        
+        // Build multipart/form-data
+        std::map<std::string, std::string> fields;
+        fields["prompt"] = request.prompt;
+        if (request.n && *request.n > 0) {
+            fields["n"] = std::to_string(*request.n);
+        }
+        if (request.size && !request.size->empty()) {
+            fields["size"] = *request.size;
+        }
+        if (request.response_format && !request.response_format->empty()) {
+            fields["response_format"] = *request.response_format;
+        }
+        
+        std::map<std::string, std::pair<std::string, std::string>> files;
+        try {
+            std::string image_content = read_file_content(request.image_path);
+            files["image"] = {request.image_path, image_content};
+            
+            if (request.mask && !request.mask->empty()) {
+                std::string mask_content = read_file_content(*request.mask);
+                files["mask"] = {*request.mask, mask_content};
+            }
+        } catch (const std::exception& e) {
+            ImageResponse img_response;
+            img_response.is_error = true;
+            img_response.error_message = std::string("Failed to read image file: ") + e.what();
+            co_return img_response;
+        }
+        
+        req.body = build_multipart_formdata(fields, files, boundary);
+        req.headers["Content-Type"] = "multipart/form-data; boundary=" + boundary;
+        
+        add_auth_headers(req, false);
+        
+        auto response = co_await http_client_.async_request(req);
+        
         ImageResponse img_response;
-        img_response.is_error = true;
-        img_response.error_message = "Image edit not yet implemented";
+        
+        if (response.is_error) {
+            img_response.is_error = true;
+            img_response.error_message = response.error_message;
+            co_return img_response;
+        }
+        
+        img_response = parse_image_response(response.body);
         co_return img_response;
     }
 
-    // Create image variation (to be implemented with multipart/form-data)
+    // Create image variation
     asio::awaitable<ImageResponse> create_image_variation(const ImageVariationRequest& request) {
-        // TODO: Implement multipart/form-data upload
+        std::string boundary = generate_boundary();
+        
+        http::Request req;
+        req.method = "POST";
+        req.host = "api.openai.com";
+        req.path = "/v1/images/variations";
+        req.use_ssl = true;
+        
+        // Build multipart/form-data
+        std::map<std::string, std::string> fields;
+        if (request.n && *request.n > 0) {
+            fields["n"] = std::to_string(*request.n);
+        }
+        if (request.size && !request.size->empty()) {
+            fields["size"] = *request.size;
+        }
+        if (request.response_format && !request.response_format->empty()) {
+            fields["response_format"] = *request.response_format;
+        }
+        
+        std::map<std::string, std::pair<std::string, std::string>> files;
+        try {
+            std::string image_content = read_file_content(request.image_path);
+            files["image"] = {request.image_path, image_content};
+        } catch (const std::exception& e) {
+            ImageResponse img_response;
+            img_response.is_error = true;
+            img_response.error_message = std::string("Failed to read image file: ") + e.what();
+            co_return img_response;
+        }
+        
+        req.body = build_multipart_formdata(fields, files, boundary);
+        req.headers["Content-Type"] = "multipart/form-data; boundary=" + boundary;
+        
+        add_auth_headers(req, false);
+        
+        auto response = co_await http_client_.async_request(req);
+        
         ImageResponse img_response;
-        img_response.is_error = true;
-        img_response.error_message = "Image variation not yet implemented";
+        
+        if (response.is_error) {
+            img_response.is_error = true;
+            img_response.error_message = response.error_message;
+            co_return img_response;
+        }
+        
+        img_response = parse_image_response(response.body);
         co_return img_response;
     }
 

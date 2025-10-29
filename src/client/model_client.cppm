@@ -7,7 +7,7 @@ import asio;
 import fmt;
 import openai.client.base;
 import openai.http_client;
-import openai.types.model;
+import openai.types;
 import std;
 
 export namespace openai::client {
@@ -18,7 +18,7 @@ public:
     using BaseClient::BaseClient;
 
     // List all available models
-    asio::awaitable<ModelList> list_models() {
+    asio::awaitable<std::expected<ModelList, ApiError>> list_models() {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -29,20 +29,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        ModelList model_list;
-        
         if (response.is_error) {
-            model_list.is_error = true;
-            model_list.error_message = response.error_message;
-            co_return model_list;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        model_list = parse_model_list(response.body);
-        co_return model_list;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code, 
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_model_list(response.body);
     }
 
     // Retrieve specific model information
-    asio::awaitable<Model> retrieve_model(const std::string& model_id) {
+    asio::awaitable<std::expected<Model, ApiError>> retrieve_model(const std::string& model_id) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -53,16 +53,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Model model;
-        
         if (response.is_error) {
-            model.is_error = true;
-            model.error_message = response.error_message;
-            co_return model;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        model = parse_model(response.body);
-        co_return model;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_model(response.body);
     }
 
 private:
@@ -78,58 +78,59 @@ private:
         
         // Parse each model in array
         auto models_start = data_pos + 8;
-        auto current_pos = models_start;
+        auto models_end = json_str.find("]", models_start);
         
-        while (true) {
-            auto model_start = json_str.find("{", current_pos);
-            if (model_start == std::string::npos) break;
+        std::size_t pos = models_start;
+        while (pos < models_end) {
+            auto obj_start = json_str.find("{", pos);
+            if (obj_start == std::string::npos || obj_start >= models_end) break;
             
-            auto model_end = json_str.find("}", model_start);
-            if (model_end == std::string::npos) break;
+            auto obj_end = json_str.find("}", obj_start);
+            if (obj_end == std::string::npos) break;
             
-            auto model_json = json_str.substr(model_start, model_end - model_start + 1);
+            std::string model_json = json_str.substr(obj_start, obj_end - obj_start + 1);
             list.data.push_back(parse_model(model_json));
             
-            current_pos = model_end + 1;
-            auto next_comma = json_str.find(",", current_pos);
-            auto array_end = json_str.find("]", current_pos);
-            
-            if (array_end != std::string::npos && 
-                (next_comma == std::string::npos || array_end < next_comma)) {
-                break;
-            }
+            pos = obj_end + 1;
         }
         
         return list;
     }
-
+    
     Model parse_model(const std::string& json_str) {
         Model model;
         
-        // Parse id
+        // Extract id
         auto id_pos = json_str.find("\"id\":");
         if (id_pos != std::string::npos) {
-            id_pos += 5;
-            auto id_start = json_str.find("\"", id_pos) + 1;
+            auto id_start = json_str.find("\"", id_pos + 5) + 1;
             auto id_end = json_str.find("\"", id_start);
             model.id = json_str.substr(id_start, id_end - id_start);
         }
         
-        // Parse created
-        auto created_pos = json_str.find("\"created\":");
-        if (created_pos != std::string::npos) {
-            created_pos += 10;
-            auto end_pos = json_str.find_first_of(",}", created_pos);
-            model.created = std::stoll(json_str.substr(created_pos, end_pos - created_pos));
+        // Extract object
+        auto obj_pos = json_str.find("\"object\":");
+        if (obj_pos != std::string::npos) {
+            auto obj_start = json_str.find("\"", obj_pos + 9) + 1;
+            auto obj_end = json_str.find("\"", obj_start);
+            model.object = json_str.substr(obj_start, obj_end - obj_start);
         }
         
-        // Parse owned_by
-        auto owned_pos = json_str.find("\"owned_by\":");
-        if (owned_pos != std::string::npos) {
-            owned_pos += 11;
-            auto owned_start = json_str.find("\"", owned_pos) + 1;
-            auto owned_end = json_str.find("\"", owned_start);
-            model.owned_by = json_str.substr(owned_start, owned_end - owned_start);
+        // Extract created
+        auto created_pos = json_str.find("\"created\":");
+        if (created_pos != std::string::npos) {
+            auto created_start = created_pos + 10;
+            auto created_end = json_str.find_first_of(",}", created_start);
+            std::string created_str = json_str.substr(created_start, created_end - created_start);
+            model.created = std::stoll(created_str);
+        }
+        
+        // Extract owned_by
+        auto owner_pos = json_str.find("\"owned_by\":");
+        if (owner_pos != std::string::npos) {
+            auto owner_start = json_str.find("\"", owner_pos + 11) + 1;
+            auto owner_end = json_str.find("\"", owner_start);
+            model.owned_by = json_str.substr(owner_start, owner_end - owner_start);
         }
         
         return model;
@@ -137,4 +138,3 @@ private:
 };
 
 } // namespace openai::client
-

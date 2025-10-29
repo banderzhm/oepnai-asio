@@ -63,8 +63,6 @@ struct ModerationResponse {
     std::string id;
     std::string model;
     std::vector<ModerationResult> results;
-    bool is_error{false};
-    std::string error_message;
 };
 
 } // namespace openai

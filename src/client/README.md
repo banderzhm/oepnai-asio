@@ -142,26 +142,52 @@ asio::awaitable<Response> method() {
 
 ## Migration Plan
 
-### Phase 1: Core APIs (Current)
-- ✅ BaseClient
+### Phase 1: Core APIs ✅ COMPLETED
+- ✅ BaseClient (with multipart/form-data support)
 - ✅ ModelClient  
 - ✅ ChatClient
-- ✅ ImageClient (partial)
+- ✅ ImageClient (full implementation - generation/edit/variation)
 
-### Phase 2: Essential APIs (Next)
-- [ ] EmbeddingClient
-- [ ] FileClient
-- [ ] ModerationClient
+### Phase 2: Essential APIs ✅ COMPLETED
+- ✅ EmbeddingClient
+- ✅ CompletionClient
+- ✅ ModerationClient
 
-### Phase 3: Advanced APIs
-- [ ] CompletionClient
-- [ ] FineTuningClient
-- [ ] AudioClient
+### Phase 3: Advanced APIs ✅ COMPLETED
+- ✅ FileClient (full implementation - upload/list/retrieve/delete)
+- ✅ FineTuningClient (full implementation)
+- ✅ AudioClient (full implementation - transcription/translation)
 
-### Phase 4: Beta APIs
-- [ ] AssistantClient
-- [ ] ThreadClient
-- [ ] RunClient
+### Phase 4: Beta APIs ✅ COMPLETED
+- ✅ AssistantClient (full implementation - create/list/retrieve/modify/delete)
+- ✅ ThreadClient (full implementation - threads + messages CRUD)
+- ✅ RunClient (full implementation - runs/steps CRUD + tool outputs)
+
+### ✅ Completed Migration
+- ❌ Old `openai-client.cppm` has been **deleted** (~132 lines)
+- ❌ Old `openai-client.cpp` has been **deleted** (~1,142 lines)
+- ✅ All core implementations moved to modular client architecture
+- ✅ **12 specialized clients** fully implemented and integrated
+- ✅ **~3,200 lines** of new modular code (replacing ~1,274 lines with better organization)
+
+### 📊 Current Implementation Status
+
+**All 12 API Clients Fully Implemented:**
+- ✅ Models API - list, retrieve
+- ✅ Chat Completions API - async/sync with full parsing
+- ✅ Images API - generation, editing, variation (with multipart/form-data)
+- ✅ Embeddings API - create embeddings with vector parsing
+- ✅ Completions API - legacy text completions
+- ✅ Moderation API - content moderation with categories
+- ✅ Files API - upload, list, retrieve, delete (with multipart/form-data)
+- ✅ Fine-tuning API - create, list, retrieve, cancel jobs
+- ✅ Audio API - transcription, translation (with multipart/form-data)
+- ✅ Assistants API (Beta) - create, list, retrieve, modify, delete
+- ✅ Threads API (Beta) - threads + messages full CRUD
+- ✅ Runs API (Beta) - runs, steps, tool outputs complete
+
+### ⚠️ Optional Enhancements
+- **Streaming responses**: Chat completions streaming support could be added as an enhancement
 
 ## Contributing
 
@@ -172,10 +198,4 @@ When adding a new API client:
 3. Use `co_await` for async operations
 4. Add comprehensive error handling
 5. Update this README
-
-## Notes
-
-- The old `openai-client.cppm` is deprecated
-- All new development should use the modular architecture
-- The `openai-client.cpp` file will be split corresponding to each client module
 

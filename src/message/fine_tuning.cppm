@@ -60,16 +60,10 @@ struct FineTuningJobListResponse {
     std::string object;
     std::vector<FineTuningJob> data;
     bool has_more{false};
-    bool is_error{false};
-    std::string error_message;
 };
 
-// Fine-tuning job response
-struct FineTuningJobResponse {
-    FineTuningJob job;
-    bool is_error{false};
-    std::string error_message;
-};
+// Fine-tuning job response (alias)
+using FineTuningJobResponse = FineTuningJob;
 
 } // namespace openai
 

@@ -84,17 +84,17 @@ struct ThreadMessageListResponse {
     std::string first_id;
     std::string last_id;
     bool has_more{false};
-    bool is_error{false};
-    std::string error_message;
 };
+
+// Aliases for convenience
+using Message = ThreadMessage;
+using MessageListResponse = ThreadMessageListResponse;
 
 // Delete thread response
 struct DeleteThreadResponse {
     std::string id;
     std::string object;
     bool deleted{false};
-    bool is_error{false};
-    std::string error_message;
 };
 
 } // namespace openai

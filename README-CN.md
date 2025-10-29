@@ -34,7 +34,7 @@
 
 ```powershell
 # 1. 克隆仓库
-git clone <your-repo-url>
+git clone https://github.com/banderzhm/oepnai-asio
 cd openai-asio
 
 # 2. 安装 OpenSSL (如果未安装)
@@ -53,7 +53,7 @@ cmake --build . --config Release
 sudo apt install clang-18 libc++-18-dev libssl-dev cmake
 
 # 2. 克隆仓库
-git clone <your-repo-url>
+git clone https://github.com/banderzhm/oepnai-asio
 cd openai-asio
 
 # 3. 构建
@@ -141,14 +141,14 @@ openai-asio/
 └── CMakeLists.txt                  # CMake 配置
 ```
 
-## 🔧 模块架构
+## 🔧 模块化架构
 
 ```
 import openai;  ← 单一导入点
     ↓
 openai (主模块)
-    ├─→ openai.http_client   (HTTP/HTTPS 客户端)
-    ├─→ openai.types         (类型定义)
+    ├─→ openai.http_client         (HTTP/HTTPS 客户端)
+    ├─→ openai.types               (类型定义)
     │    ├─→ openai.types.chat
     │    ├─→ openai.types.completion
     │    ├─→ openai.types.model
@@ -158,24 +158,60 @@ openai (主模块)
     │    ├─→ openai.types.fine_tuning
     │    ├─→ openai.types.audio
     │    ├─→ openai.types.moderation
-    │    └─→ openai.types.common
-    └─→ openai.client        (API 客户端)
+    │    ├─→ openai.types.assistant  (Beta)
+    │    ├─→ openai.types.thread     (Beta)
+    │    └─→ openai.types.run        (Beta)
+    └─→ openai.client.unified      (统一客户端)
+         ├─→ openai.client.base    (基础客户端)
+         ├─→ openai.client.model   (Models API)
+         ├─→ openai.client.chat    (Chat API)
+         ├─→ openai.client.image   (Images API)
+         ├─→ openai.client.embedding
+         ├─→ openai.client.completion
+         ├─→ openai.client.moderation
+         ├─→ openai.client.file
+         ├─→ openai.client.fine_tuning
+         ├─→ openai.client.audio
+         ├─→ openai.client.assistant  (Beta)
+         ├─→ openai.client.thread     (Beta)
+         └─→ openai.client.run        (Beta)
 ```
+
+### 架构优势
+
+- 🔹 **模块化设计** - 每个 API 独立模块，按需编译
+- 🔹 **快速编译** - 模块缓存，增量编译更快
+- 🔹 **易于维护** - 职责分离，代码组织清晰
+- 🔹 **组合模式** - 统一客户端组合所有专用客户端
 
 ## 📚 API 支持
 
+### 核心 APIs
 | API | 状态 | 说明 |
 |-----|------|------|
 | Chat Completions | ✅ | 聊天补全 (GPT-3.5/GPT-4) |
 | Completions | ✅ | 文本补全 (legacy) |
-| Edits | ✅ | 文本编辑 (已弃用) |
 | Models | ✅ | 模型列表和信息 |
-| Images | ✅ | 图像生成 (DALL-E) |
-| Embeddings | ✅ | 文本嵌入 |
-| Files | ✅ | 文件管理 |
-| Fine-tuning | ✅ | 模型微调 |
-| Audio | ✅ | 音频转录/翻译 |
+| Images | ✅ | 图像生成/编辑/变体 |
+| Embeddings | ✅ | 文本嵌入向量 |
 | Moderations | ✅ | 内容审核 |
+
+### 高级 APIs
+| API | 状态 | 说明 |
+|-----|------|------|
+| Files | ✅ | 文件上传/列表/检索/删除 |
+| Fine-tuning | ✅ | 模型微调作业管理 |
+| Audio | ✅ | 音频转录/翻译 (Whisper) |
+
+### Beta APIs
+| API | 状态 | 说明 |
+|-----|------|------|
+| Assistants | ✅ | AI 助手创建和管理 |
+| Threads | ✅ | 会话线程管理 |
+| Messages | ✅ | 消息 CRUD |
+| Runs | ✅ | 运行管理和工具输出 |
+
+**所有 OpenAI API 均已完整实现！**
 
 ## 🔧 故障排除
 

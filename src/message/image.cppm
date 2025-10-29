@@ -65,8 +65,6 @@ struct ImageData {
 struct ImageResponse {
     std::int64_t created{0};
     std::vector<ImageData> data;
-    bool is_error{false};
-    std::string error_message;
 };
 
 } // namespace openai

@@ -4,6 +4,7 @@
 export module openai.types;
 
 // Re-export all type sub-modules
+export import openai.types.common;
 export import openai.types.chat;
 export import openai.types.completion;
 export import openai.types.model;

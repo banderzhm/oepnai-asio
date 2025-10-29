@@ -10,6 +10,31 @@ import fmt;
 
 export namespace openai {
 
+// API Error type
+struct ApiError {
+    int status_code{0};
+    std::string message;
+    std::string type;
+    
+    // Constructor for simple error message
+    explicit ApiError(std::string msg) : message(std::move(msg)) {}
+    
+    // Constructor with status code
+    ApiError(int code, std::string msg) : status_code(code), message(std::move(msg)) {}
+    
+    // Constructor with full details
+    ApiError(int code, std::string msg, std::string err_type) 
+        : status_code(code), message(std::move(msg)), type(std::move(err_type)) {}
+    
+    // Convert to string for display
+    std::string to_string() const {
+        if (status_code > 0) {
+            return fmt::format("[{}] {}", status_code, message);
+        }
+        return message;
+    }
+};
+
 // Helper function to escape JSON strings
 std::string escape_json(const std::string& str);
 

@@ -71,8 +71,6 @@ struct RunListResponse {
     std::string first_id;
     std::string last_id;
     bool has_more{false};
-    bool is_error{false};
-    std::string error_message;
 };
 
 // Run step (for detailed execution tracking)
@@ -99,8 +97,6 @@ struct RunStepListResponse {
     std::string first_id;
     std::string last_id;
     bool has_more{false};
-    bool is_error{false};
-    std::string error_message;
 };
 
 } // namespace openai

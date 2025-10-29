@@ -33,8 +33,6 @@ struct AudioTranslationRequest {
 // Audio response
 struct AudioResponse {
     std::string text;
-    bool is_error{false};
-    std::string error_message;
 };
 
 } // namespace openai

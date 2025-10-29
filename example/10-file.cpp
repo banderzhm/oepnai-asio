@@ -6,11 +6,11 @@ import fmt;
 import openai;
 import std;
 
-asio::awaitable<void> files_example(openai::Client& client, asio::io_context& io_context) {
+asio::awaitable<void> files_example(openai::Client& client) {
     fmt::print("=== Files API Example ===\n\n");
     
     fmt::print("The Files API allows you to:\n");
-    fmt::print("  - Upload files for fine-tuning\n");
+    fmt::print("  - Upload files for fine-tuning or assistants\n");
     fmt::print("  - List uploaded files\n");
     fmt::print("  - Retrieve file information\n");
     fmt::print("  - Delete files\n\n");
@@ -18,54 +18,38 @@ asio::awaitable<void> files_example(openai::Client& client, asio::io_context& io
     // List files
     fmt::print("--- Listing Files ---\n");
     
-    openai::http::Request req;
-    req.method = "GET";
-    req.path = "/v1/files";
-    req.host = "api.openai.com";
-    req.use_ssl = true;
-    req.headers["Authorization"] = fmt::format("Bearer {}", std::getenv("OPENAI_API_KEY"));
-    
     try {
-        openai::http::Client http_client(io_context);
-        auto response = co_await http_client.async_request(req);
+        auto file_list = co_await client.list_files();
         
-        if (response.is_error) {
-            fmt::print("Error: {}\n", response.error_message);
-            co_return;
-        }
-        
-        if (response.status_code != 200) {
-            fmt::print("API Error ({}): {}\n", response.status_code, response.body);
-            co_return;
-        }
-        
-        fmt::print("Files API Response:\n");
-        
-        // Parse and display file list
-        const auto& body = response.body;
-        auto data_pos = body.find("\"data\":[");
-        
-        if (data_pos != std::string::npos) {
-            auto array_start = data_pos + 8;
-            auto array_end = body.find("]", array_start);
-            
-            if (array_end != std::string::npos && array_end - array_start < 5) {
-                fmt::print("  No files found.\n\n");
+        if (file_list.is_error) {
+            fmt::print("Error: {}\n\n", file_list.error_message);
+        } else {
+            if (file_list.data.empty()) {
+                fmt::print("No files found.\n\n");
             } else {
-                fmt::print("{}\n\n", body.substr(0, std::min(std::size_t(500), body.size())));
+                fmt::print("Files ({} total):\n", file_list.data.size());
+                for (const auto& file : file_list.data) {
+                    fmt::print("  ID: {}\n", file.id);
+                    fmt::print("  Filename: {}\n", file.filename);
+                    fmt::print("  Purpose: {}\n", file.purpose);
+                    fmt::print("  Size: {} bytes\n", file.bytes);
+                    fmt::print("  Status: {}\n", file.status);
+                    fmt::print("  ---\n");
+                }
+                fmt::print("\n");
             }
         }
         
-        fmt::print(R"(File Upload Format:
-  Files must be in JSONL format for fine-tuning:
-  {{"prompt": "<prompt>", "completion": "<completion>"}}
-  {{"prompt": "<prompt>", "completion": "<completion>"}}
-  ...
+        fmt::print(R"(File Upload Example:
+  openai::FileUploadRequest upload_req;
+  upload_req.file_path = "training_data.jsonl";
+  upload_req.purpose = "fine-tune";
+  auto upload_resp = co_await client.upload_file(upload_req);
 
-To upload a file:
-  POST /v1/files
-  Content-Type: multipart/form-data
-  Body: file=@training_data.jsonl, purpose=fine-tune
+File Format (JSONL for fine-tuning):
+  {"prompt": "<prompt>", "completion": "<completion>"}
+  {"prompt": "<prompt>", "completion": "<completion>"}
+  ...
 
 Supported purposes:
   - fine-tune: For creating fine-tuned models
@@ -73,7 +57,13 @@ Supported purposes:
 
 File size limits:
   - Maximum file size: 512 MB
-  - Supported formats: .jsonl
+  - Supported formats: .jsonl, .json, .txt, .pdf, etc.
+
+Operations available:
+  - client.upload_file(request)    // Upload a file
+  - client.list_files()            // List all files
+  - client.retrieve_file(file_id)  // Get file info
+  - client.delete_file(file_id)    // Delete a file
 )");
         
     } catch (const std::exception& e) {
@@ -91,7 +81,7 @@ int main() {
     asio::io_context io_context;
     openai::Client client(api_key, io_context);
     
-    asio::co_spawn(io_context, files_example(client, io_context), asio::detached);
+    asio::co_spawn(io_context, files_example(client), asio::detached);
     io_context.run();
     
     return 0;
