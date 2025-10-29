@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.fine_tuning;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create fine-tuning job
-    asio::awaitable<FineTuningJobResponse> create_fine_tuning_job(const FineTuningRequest& request) {
+    asio::awaitable<std::expected<FineTuningJob, ApiError>> create_fine_tuning_job(const FineTuningRequest& request) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -43,7 +44,7 @@ public:
     }
 
     // List fine-tuning jobs
-    asio::awaitable<FineTuningJobListResponse> list_fine_tuning_jobs(int limit = 20) {
+    asio::awaitable<std::expected<FineTuningJobListResponse, ApiError>> list_fine_tuning_jobs(int limit = 20) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";

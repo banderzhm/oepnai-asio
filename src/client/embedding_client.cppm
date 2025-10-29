@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.embedding;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create embeddings for input text
-    asio::awaitable<EmbeddingResponse> create_embedding(const EmbeddingRequest& request) {
+    asio::awaitable<std::expected<EmbeddingResponse, ApiError>> create_embedding(const EmbeddingRequest& request) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -30,16 +31,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        EmbeddingResponse emb_response;
-        
         if (response.is_error) {
-            emb_response.is_error = true;
-            emb_response.error_message = response.error_message;
-            co_return emb_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        emb_response = parse_embedding_response(response.body);
-        co_return emb_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_embedding_response(response.body);
     }
 
 private:

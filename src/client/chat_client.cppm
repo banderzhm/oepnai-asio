@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.chat;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create chat completion (async)
-    asio::awaitable<ChatCompletionResponse> create_chat_completion(
+    asio::awaitable<std::expected<ChatCompletionResponse, ApiError>> create_chat_completion(
         const ChatCompletionRequest& request
     ) {
         http::Request req;
@@ -32,28 +33,29 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        ChatCompletionResponse chat_response;
-        
         if (response.is_error) {
-            chat_response.is_error = true;
-            chat_response.error_message = response.error_message;
-            co_return chat_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        chat_response = parse_chat_completion_response(response.body);
-        co_return chat_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_chat_completion_response(response.body);
     }
 
     // Create chat completion (sync)
-    ChatCompletionResponse create_chat_completion_sync(
+    std::expected<ChatCompletionResponse, ApiError> create_chat_completion_sync(
         const ChatCompletionRequest& request
     ) {
-        ChatCompletionResponse result;
+        std::expected<ChatCompletionResponse, ApiError> result = std::unexpected(ApiError("Not executed"));
         
         asio::co_spawn(
             io_context_,
             [this, request, &result]() -> asio::awaitable<void> {
                 result = co_await create_chat_completion(request);
+                co_return;
             },
             asio::detached
         );
@@ -194,9 +196,8 @@ private:
                 }
             }
             
-        } catch (const std::exception& e) {
-            response.is_error = true;
-            response.error_message = fmt::format("Failed to parse chat completion response: {}", e.what());
+        } catch (const std::exception&) {
+            // Return partial response even on parse errors
         }
         
         return response;

@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.moderation;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create moderation check
-    asio::awaitable<ModerationResponse> create_moderation(const ModerationRequest& request) {
+    asio::awaitable<std::expected<ModerationResponse, ApiError>> create_moderation(const ModerationRequest& request) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -30,16 +31,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        ModerationResponse mod_response;
-        
         if (response.is_error) {
-            mod_response.is_error = true;
-            mod_response.error_message = response.error_message;
-            co_return mod_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        mod_response = parse_moderation_response(response.body);
-        co_return mod_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_moderation_response(response.body);
     }
 
 private:
@@ -99,9 +100,8 @@ private:
                 }
             }
             
-        } catch (const std::exception& e) {
-            response.is_error = true;
-            response.error_message = fmt::format("Failed to parse moderation response: {}", e.what());
+        } catch (const std::exception&) {
+            // Return partial response even on parse errors
         }
         
         return response;

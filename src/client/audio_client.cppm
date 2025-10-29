@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.audio;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create transcription
-    asio::awaitable<AudioResponse> create_transcription(const AudioTranscriptionRequest& request) {
+    asio::awaitable<std::expected<AudioResponse, ApiError>> create_transcription(const AudioTranscriptionRequest& request) {
         std::string boundary = generate_boundary();
         
         http::Request req;
@@ -48,10 +49,7 @@ public:
             std::string audio_content = read_file_content(request.file_path);
             files["file"] = {request.file_path, audio_content};
         } catch (const std::exception& e) {
-            AudioResponse response;
-            response.is_error = true;
-            response.error_message = std::string("Failed to read audio file: ") + e.what();
-            co_return response;
+            co_return std::unexpected(ApiError(std::string("Failed to read audio file: ") + e.what()));
         }
         
         req.body = build_multipart_formdata(fields, files, boundary);
@@ -61,21 +59,23 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        AudioResponse audio_response;
-        
         if (response.is_error) {
-            audio_response.is_error = true;
-            audio_response.error_message = response.error_message;
-            co_return audio_response;
+            co_return std::unexpected(ApiError(response.error_message));
+        }
+        
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
         }
         
         // Parse response (usually just text)
+        AudioResponse audio_response;
         audio_response.text = response.body;
         co_return audio_response;
     }
 
     // Create translation
-    asio::awaitable<AudioResponse> create_translation(const AudioTranslationRequest& request) {
+    asio::awaitable<std::expected<AudioResponse, ApiError>> create_translation(const AudioTranslationRequest& request) {
         std::string boundary = generate_boundary();
         
         http::Request req;
@@ -102,10 +102,7 @@ public:
             std::string audio_content = read_file_content(request.file_path);
             files["file"] = {request.file_path, audio_content};
         } catch (const std::exception& e) {
-            AudioResponse response;
-            response.is_error = true;
-            response.error_message = std::string("Failed to read audio file: ") + e.what();
-            co_return response;
+            co_return std::unexpected(ApiError(std::string("Failed to read audio file: ") + e.what()));
         }
         
         req.body = build_multipart_formdata(fields, files, boundary);
@@ -115,15 +112,17 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        AudioResponse audio_response;
-        
         if (response.is_error) {
-            audio_response.is_error = true;
-            audio_response.error_message = response.error_message;
-            co_return audio_response;
+            co_return std::unexpected(ApiError(response.error_message));
+        }
+        
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
         }
         
         // Parse response (usually just text)
+        AudioResponse audio_response;
         audio_response.text = response.body;
         co_return audio_response;
     }

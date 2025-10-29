@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.completion;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create text completion
-    asio::awaitable<std::string> create_completion(const CompletionRequest& request) {
+    asio::awaitable<std::expected<std::string, ApiError>> create_completion(const CompletionRequest& request) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -31,7 +32,12 @@ public:
         auto response = co_await http_client_.async_request(req);
         
         if (response.is_error) {
-            co_return fmt::format("Error: {}", response.error_message);
+            co_return std::unexpected(ApiError(response.error_message));
+        }
+        
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
         }
         
         // Parse the first choice text
@@ -55,7 +61,7 @@ public:
             }
         }
         
-        co_return "";
+        co_return std::string("");
     }
 };
 

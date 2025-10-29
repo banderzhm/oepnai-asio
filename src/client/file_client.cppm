@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.file;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Upload file
-    asio::awaitable<FileUploadResponse> upload_file(const FileUploadRequest& request) {
+    asio::awaitable<std::expected<FileUploadResponse, ApiError>> upload_file(const FileUploadRequest& request) {
         std::string boundary = generate_boundary();
         
         http::Request req;
@@ -36,10 +37,7 @@ public:
             std::string file_content = read_file_content(request.file_path);
             files["file"] = {request.file_path, file_content};
         } catch (const std::exception& e) {
-            FileUploadResponse response;
-            response.is_error = true;
-            response.error_message = std::string("Failed to read file: ") + e.what();
-            co_return response;
+            co_return std::unexpected(ApiError(std::string("Failed to read file: ") + e.what()));
         }
         
         req.body = build_multipart_formdata(fields, files, boundary);
@@ -49,20 +47,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FileUploadResponse upload_response;
-        
         if (response.is_error) {
-            upload_response.is_error = true;
-            upload_response.error_message = response.error_message;
-            co_return upload_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        upload_response = parse_file_upload_response(response.body);
-        co_return upload_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_file_upload_response(response.body);
     }
 
     // List files
-    asio::awaitable<FileListResponse> list_files() {
+    asio::awaitable<std::expected<FileListResponse, ApiError>> list_files() {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -73,20 +71,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FileListResponse list_response;
-        
         if (response.is_error) {
-            list_response.is_error = true;
-            list_response.error_message = response.error_message;
-            co_return list_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        list_response = parse_file_list_response(response.body);
-        co_return list_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_file_list_response(response.body);
     }
 
     // Retrieve file metadata
-    asio::awaitable<FileObject> retrieve_file(const std::string& file_id) {
+    asio::awaitable<std::expected<FileObject, ApiError>> retrieve_file(const std::string& file_id) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -97,20 +95,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FileObject file;
-        
         if (response.is_error) {
-            file.is_error = true;
-            file.error_message = response.error_message;
-            co_return file;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        file = parse_file_object(response.body);
-        co_return file;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_file_object(response.body);
     }
 
     // Retrieve file content
-    asio::awaitable<FileContentResponse> retrieve_file_content(const std::string& file_id) {
+    asio::awaitable<std::expected<FileContentResponse, ApiError>> retrieve_file_content(const std::string& file_id) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -121,20 +119,22 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FileContentResponse content_response;
-        
         if (response.is_error) {
-            content_response.is_error = true;
-            content_response.error_message = response.error_message;
-            co_return content_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        FileContentResponse content_response;
         content_response.content = response.body;
         co_return content_response;
     }
 
     // Delete file
-    asio::awaitable<bool> delete_file(const std::string& file_id) {
+    asio::awaitable<std::expected<bool, ApiError>> delete_file(const std::string& file_id) {
         http::Request req;
         req.method = "DELETE";
         req.host = "api.openai.com";
@@ -146,7 +146,12 @@ public:
         auto response = co_await http_client_.async_request(req);
         
         if (response.is_error) {
-            co_return false;
+            co_return std::unexpected(ApiError(response.error_message));
+        }
+        
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
         }
         
         // Check for "deleted": true

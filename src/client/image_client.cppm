@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.image;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Generate image from prompt
-    asio::awaitable<ImageResponse> generate_image(const ImageGenerationRequest& request) {
+    asio::awaitable<std::expected<ImageResponse, ApiError>> generate_image(const ImageGenerationRequest& request) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -30,20 +31,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        ImageResponse img_response;
-        
         if (response.is_error) {
-            img_response.is_error = true;
-            img_response.error_message = response.error_message;
-            co_return img_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        img_response = parse_image_response(response.body);
-        co_return img_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_image_response(response.body);
     }
 
     // Edit image
-    asio::awaitable<ImageResponse> edit_image(const ImageEditRequest& request) {
+    asio::awaitable<std::expected<ImageResponse, ApiError>> edit_image(const ImageEditRequest& request) {
         std::string boundary = generate_boundary();
         
         http::Request req;
@@ -75,10 +76,7 @@ public:
                 files["mask"] = {*request.mask, mask_content};
             }
         } catch (const std::exception& e) {
-            ImageResponse img_response;
-            img_response.is_error = true;
-            img_response.error_message = std::string("Failed to read image file: ") + e.what();
-            co_return img_response;
+            co_return std::unexpected(ApiError(std::string("Failed to read image file: ") + e.what()));
         }
         
         req.body = build_multipart_formdata(fields, files, boundary);
@@ -88,20 +86,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        ImageResponse img_response;
-        
         if (response.is_error) {
-            img_response.is_error = true;
-            img_response.error_message = response.error_message;
-            co_return img_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        img_response = parse_image_response(response.body);
-        co_return img_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_image_response(response.body);
     }
 
     // Create image variation
-    asio::awaitable<ImageResponse> create_image_variation(const ImageVariationRequest& request) {
+    asio::awaitable<std::expected<ImageResponse, ApiError>> create_image_variation(const ImageVariationRequest& request) {
         std::string boundary = generate_boundary();
         
         http::Request req;
@@ -127,10 +125,7 @@ public:
             std::string image_content = read_file_content(request.image_path);
             files["image"] = {request.image_path, image_content};
         } catch (const std::exception& e) {
-            ImageResponse img_response;
-            img_response.is_error = true;
-            img_response.error_message = std::string("Failed to read image file: ") + e.what();
-            co_return img_response;
+            co_return std::unexpected(ApiError(std::string("Failed to read image file: ") + e.what()));
         }
         
         req.body = build_multipart_formdata(fields, files, boundary);
@@ -140,16 +135,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        ImageResponse img_response;
-        
         if (response.is_error) {
-            img_response.is_error = true;
-            img_response.error_message = response.error_message;
-            co_return img_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        img_response = parse_image_response(response.body);
-        co_return img_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_image_response(response.body);
     }
 
 private:
