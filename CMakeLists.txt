@@ -22,30 +22,30 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(UNIX)
     # Linux/Unix: Auto-detect libc++ standard library module paths
     
-    # Try to find libc++ module directory
+    # Try to find libc++ module directory (LLVM 19-21)
     find_path(LIBCXX_MODULE_DIRS
         NAMES std.cppm
         PATHS
             /usr/lib/llvm-21/share/libc++/v1
             /usr/lib/llvm-20/share/libc++/v1
             /usr/lib/llvm-19/share/libc++/v1
-            /usr/lib/llvm-18/share/libc++/v1
             /usr/local/lib/llvm-21/share/libc++/v1
             /usr/local/lib/llvm-20/share/libc++/v1
+            /usr/local/lib/llvm-19/share/libc++/v1
             /opt/llvm/share/libc++/v1
         DOC "Path to libc++ standard library modules"
     )
     
-    # Try to find libc++ include directory
+    # Try to find libc++ include directory (LLVM 19-21)
     find_path(LIBCXX_INCLUDE_DIRS
         NAMES __config
         PATHS
             /usr/lib/llvm-21/include/c++/v1
             /usr/lib/llvm-20/include/c++/v1
             /usr/lib/llvm-19/include/c++/v1
-            /usr/lib/llvm-18/include/c++/v1
             /usr/local/lib/llvm-21/include/c++/v1
             /usr/local/lib/llvm-20/include/c++/v1
+            /usr/local/lib/llvm-19/include/c++/v1
             /opt/llvm/include/c++/v1
             /usr/include/c++/v1
         DOC "Path to libc++ headers"
@@ -81,28 +81,46 @@ elseif(WIN32)
         endif()
     endif()
     
-    # Priority 2: If environment variable not found or invalid, try to detect from compiler path and common locations
+    # Priority 2: If environment variable not found or invalid, try to detect from compiler path
     if(NOT LIBCXX_MODULE_DIRS)
-        # Extract MSVC version from compiler path
+        # Extract MSVC version directory from compiler path
+        # cl.exe is at: VC/Tools/MSVC/{version}/bin/Hostx64/x64/cl.exe
+        # modules are at: VC/Tools/MSVC/{version}/modules/
+        # So we need to go up 3 levels from cl.exe directory
         get_filename_component(COMPILER_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
-        get_filename_component(COMPILER_BIN_DIR "${COMPILER_DIR}" DIRECTORY)
+        get_filename_component(COMPILER_HOST_DIR "${COMPILER_DIR}" DIRECTORY)
+        get_filename_component(COMPILER_BIN_DIR "${COMPILER_HOST_DIR}" DIRECTORY)
+        get_filename_component(MSVC_VERSION_DIR "${COMPILER_BIN_DIR}" DIRECTORY)
         
-        find_path(LIBCXX_MODULE_DIRS
-            NAMES std.ixx
-            PATHS
-                "${COMPILER_BIN_DIR}/modules"
-                "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/modules"
-                "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/MSVC/14.44.35207/modules"
-                "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/modules"
-                "F:/program/visul_studio/idea/VC/Tools/MSVC/14.44.35207/modules"
-            DOC "Path to MSVC standard library modules"
-        )
+        # First, try the path extracted from compiler
+        set(DETECTED_MODULE_PATH "${MSVC_VERSION_DIR}/modules")
         
-        if(LIBCXX_MODULE_DIRS)
-            message(STATUS "Auto-detected MSVC module directory: ${LIBCXX_MODULE_DIRS}")
+        if(EXISTS "${DETECTED_MODULE_PATH}/std.ixx")
+            set(LIBCXX_MODULE_DIRS "${DETECTED_MODULE_PATH}" CACHE PATH "Path to MSVC modules")
+            message(STATUS "Auto-detected MSVC module directory from compiler path: ${LIBCXX_MODULE_DIRS}")
         else()
-            message(WARNING "Could not auto-detect MSVC module path. Please set manually:")
-            message(WARNING "  cmake -DLIBCXX_MODULE_DIRS=<path> ..")
+            # Fallback: Search in common Visual Studio installation locations
+            message(STATUS "Could not detect from compiler path, searching common locations...")
+            find_path(LIBCXX_MODULE_DIRS
+                NAMES std.ixx
+                PATHS
+                    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC"
+                    "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/MSVC"
+                    "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC"
+                    "F:/program/visul_studio/idea/VC/Tools/MSVC"
+                PATH_SUFFIXES
+                    "14.44.35207/modules"
+                    "14.43.34601/modules"
+                    "14.42.34433/modules"
+                DOC "Path to MSVC standard library modules"
+            )
+            
+            if(LIBCXX_MODULE_DIRS)
+                message(STATUS "Found MSVC module directory in common locations: ${LIBCXX_MODULE_DIRS}")
+            else()
+                message(WARNING "Could not auto-detect MSVC module path. Please set manually:")
+                message(WARNING "  cmake -DLIBCXX_MODULE_DIRS=<path> ..")
+            endif()
         endif()
     endif()
 endif()
