@@ -162,46 +162,84 @@ openai-asio/
 
 ## 🔧 Modular Architecture
 
+### Module Hierarchy
+
 ```
 import openai;  ← Single import point
     ↓
-openai (main module)
-    ├─→ openai.http_client         (HTTP/HTTPS client)
-    ├─→ openai.types               (Type definitions)
-    │    ├─→ openai.types.chat
-    │    ├─→ openai.types.completion
-    │    ├─→ openai.types.model
-    │    ├─→ openai.types.image
-    │    ├─→ openai.types.embedding
-    │    ├─→ openai.types.file
-    │    ├─→ openai.types.fine_tuning
-    │    ├─→ openai.types.audio
-    │    ├─→ openai.types.moderation
-    │    ├─→ openai.types.assistant  (Beta)
-    │    ├─→ openai.types.thread     (Beta)
-    │    └─→ openai.types.run        (Beta)
-    └─→ openai.client.unified      (Unified client)
-         ├─→ openai.client.base    (Base client)
-         ├─→ openai.client.model   (Models API)
-         ├─→ openai.client.chat    (Chat API)
-         ├─→ openai.client.image   (Images API)
-         ├─→ openai.client.embedding
-         ├─→ openai.client.completion
-         ├─→ openai.client.moderation
-         ├─→ openai.client.file
-         ├─→ openai.client.fine_tuning
-         ├─→ openai.client.audio
-         ├─→ openai.client.assistant  (Beta)
-         ├─→ openai.client.thread     (Beta)
-         └─→ openai.client.run        (Beta)
+┌─────────────────────────────────────────────────────────────┐
+│ openai (main module)                                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─── openai.http_client ──────────────────────────┐       │
+│  │   - HTTPS client with SSL/TLS support           │       │
+│  │   - Async I/O with Asio coroutines              │       │
+│  └──────────────────────────────────────────────────┘       │
+│                                                             │
+│  ┌─── openai.types ─────────────────────────────────┐      │
+│  │  Type Definitions & Error Handling               │      │
+│  │                                                   │      │
+│  │  ├─→ openai.types.common                         │      │
+│  │  │   • ApiError (error handling)                 │      │
+│  │  │   • std::expected<T, ApiError> wrapper        │      │
+│  │  │                                                │      │
+│  │  ├─→ Core API Types                              │      │
+│  │  │   • openai.types.chat                         │      │
+│  │  │   • openai.types.completion                   │      │
+│  │  │   • openai.types.model                        │      │
+│  │  │   • openai.types.image                        │      │
+│  │  │   • openai.types.embedding                    │      │
+│  │  │   • openai.types.moderation                   │      │
+│  │  │                                                │      │
+│  │  ├─→ Advanced API Types                          │      │
+│  │  │   • openai.types.file                         │      │
+│  │  │   • openai.types.fine_tuning                  │      │
+│  │  │   • openai.types.audio                        │      │
+│  │  │                                                │      │
+│  │  └─→ Beta API Types                              │      │
+│  │      • openai.types.assistant (Beta)             │      │
+│  │      • openai.types.thread (Beta)                │      │
+│  │      • openai.types.run (Beta)                   │      │
+│  └───────────────────────────────────────────────────┘      │
+│                                                             │
+│  ┌─── openai.client.unified ───────────────────────┐       │
+│  │  Unified Client (Composition Pattern)           │       │
+│  │                                                  │       │
+│  │  ┌──── openai.client.base ──────────────┐       │       │
+│  │  │  Base Client (Shared Functionality)  │       │       │
+│  │  │  • HTTP request wrapper              │       │       │
+│  │  │  • Error handling                    │       │       │
+│  │  │  • Authentication                    │       │       │
+│  │  └──────────────────────────────────────┘       │       │
+│  │                                                  │       │
+│  │  Specialized API Clients:                       │       │
+│  │  ├─→ openai.client.chat                         │       │
+│  │  │   → asio::awaitable<std::expected<T, E>>     │       │
+│  │  ├─→ openai.client.completion                   │       │
+│  │  ├─→ openai.client.model                        │       │
+│  │  ├─→ openai.client.image                        │       │
+│  │  ├─→ openai.client.embedding                    │       │
+│  │  ├─→ openai.client.moderation                   │       │
+│  │  ├─→ openai.client.file                         │       │
+│  │  ├─→ openai.client.fine_tuning                  │       │
+│  │  ├─→ openai.client.audio                        │       │
+│  │  ├─→ openai.client.assistant (Beta)             │       │
+│  │  ├─→ openai.client.thread (Beta)                │       │
+│  │  └─→ openai.client.run (Beta)                   │       │
+│  └──────────────────────────────────────────────────┘       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Architecture Benefits
 
+- 🔹 **Coroutine-First Design** - All async APIs return `asio::awaitable<std::expected<T, ApiError>>`
+- 🔹 **Type-Safe Error Handling** - `std::expected` for explicit error propagation
 - 🔹 **Modular Design** - Each API in separate module, compile on demand
 - 🔹 **Fast Compilation** - Module caching, faster incremental builds
 - 🔹 **Easy Maintenance** - Separation of concerns, clear code organization
 - 🔹 **Composition Pattern** - Unified client composes all specialized clients
+- 🔹 **Zero Header Dependencies** - Pure C++23 modules, no traditional headers
 
 ## 📚 API Support
 
