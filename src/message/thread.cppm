@@ -17,6 +17,14 @@ enum class ThreadMessageRole {
     Assistant
 };
 
+// Helper function to convert string to ThreadMessageRole
+inline ThreadMessageRole string_to_thread_message_role(const std::string& role_str) {
+    if (role_str == "assistant") {
+        return ThreadMessageRole::Assistant;
+    }
+    return ThreadMessageRole::User;  // Default to User
+}
+
 // Message content (text)
 struct MessageContent {
     std::string type{"text"};
@@ -86,16 +94,45 @@ struct ThreadMessageListResponse {
     bool has_more{false};
 };
 
-// Aliases for convenience
-using Message = ThreadMessage;
-using MessageListResponse = ThreadMessageListResponse;
-
 // Delete thread response
 struct DeleteThreadResponse {
     std::string id;
     std::string object;
     bool deleted{false};
 };
+
+} // namespace openai
+
+// ============================================================================
+// Implementation
+// ============================================================================
+
+namespace openai {
+
+// CreateThreadRequest::to_json implementation
+std::string CreateThreadRequest::to_json() const {
+    return "{}";  // Empty object for now
+}
+
+// CreateMessageRequest::to_json implementation
+std::string CreateMessageRequest::to_json() const {
+    std::ostringstream json;
+    json << "{";
+    json << "\"role\":\"" << (role == ThreadMessageRole::User ? "user" : "assistant") << "\",";
+    json << "\"content\":\"" << content << "\"";
+    json << "}";
+    return json.str();
+}
+
+// ModifyThreadRequest::to_json implementation
+std::string ModifyThreadRequest::to_json() const {
+    return "{}";  // Empty object for now
+}
+
+// ModifyMessageRequest::to_json implementation
+std::string ModifyMessageRequest::to_json() const {
+    return "{}";  // Empty object for now
+}
 
 } // namespace openai
 

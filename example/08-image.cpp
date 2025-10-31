@@ -31,13 +31,13 @@ asio::awaitable<void> image_example(openai::Client& client) {
         try {
             auto response = co_await client.generate_image(req);
             
-            if (response.is_error) {
-                fmt::print("Error: {}\n\n", response.error_message);
+            if (!response.has_value()) {
+                fmt::print("Error: {}\n\n", response.error().to_string());
             } else {
                 fmt::print("✓ Image generated successfully!\n");
-                fmt::print("Number of images: {}\n", response.data.size());
-                for (std::size_t i = 0; i < response.data.size(); ++i) {
-                    fmt::print("  Image {}: {}\n", i + 1, response.data[i].url);
+                fmt::print("Number of images: {}\n", response.value().data.size());
+                for (std::size_t i = 0; i < response.value().data.size(); ++i) {
+                    fmt::print("  Image {}: {}\n", i + 1, response.value().data[i].url);
                 }
                 fmt::print("\n");
             }
@@ -66,11 +66,11 @@ asio::awaitable<void> image_example(openai::Client& client) {
         try {
             auto response = co_await client.generate_image(req);
             
-            if (response.is_error) {
-                fmt::print("Error: {}\n\n", response.error_message);
+            if (!response.has_value()) {
+                fmt::print("Error: {}\n\n", response.error().to_string());
             } else {
                 fmt::print("✓ Image generated successfully!\n");
-                for (const auto& img : response.data) {
+                for (const auto& img : response.value().data) {
                     fmt::print("  URL: {}\n", img.url);
                     if (!img.revised_prompt.empty()) {
                         fmt::print("  Revised prompt: {}\n", img.revised_prompt);

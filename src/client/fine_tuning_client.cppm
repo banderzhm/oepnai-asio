@@ -31,16 +31,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FineTuningJobResponse job_response;
-        
         if (response.is_error) {
-            job_response.is_error = true;
-            job_response.error_message = response.error_message;
-            co_return job_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        job_response.job = parse_fine_tuning_job(response.body);
-        co_return job_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_fine_tuning_job(response.body);
     }
 
     // List fine-tuning jobs
@@ -55,20 +55,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FineTuningJobListResponse list_response;
-        
         if (response.is_error) {
-            list_response.is_error = true;
-            list_response.error_message = response.error_message;
-            co_return list_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        list_response = parse_fine_tuning_job_list_response(response.body);
-        co_return list_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_fine_tuning_job_list_response(response.body);
     }
 
     // Retrieve fine-tuning job
-    asio::awaitable<FineTuningJobResponse> retrieve_fine_tuning_job(const std::string& job_id) {
+    asio::awaitable<std::expected<FineTuningJob, ApiError>> retrieve_fine_tuning_job(const std::string& job_id) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -79,20 +79,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FineTuningJobResponse job_response;
-        
         if (response.is_error) {
-            job_response.is_error = true;
-            job_response.error_message = response.error_message;
-            co_return job_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        job_response.job = parse_fine_tuning_job(response.body);
-        co_return job_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_fine_tuning_job(response.body);
     }
 
     // Cancel fine-tuning job
-    asio::awaitable<FineTuningJobResponse> cancel_fine_tuning_job(const std::string& job_id) {
+    asio::awaitable<std::expected<FineTuningJob, ApiError>> cancel_fine_tuning_job(const std::string& job_id) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -103,16 +103,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        FineTuningJobResponse job_response;
-        
         if (response.is_error) {
-            job_response.is_error = true;
-            job_response.error_message = response.error_message;
-            co_return job_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        job_response.job = parse_fine_tuning_job(response.body);
-        co_return job_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_fine_tuning_job(response.body);
     }
 
 private:
@@ -203,7 +203,7 @@ private:
                 }
                 
                 auto job_json = json_str.substr(obj_start, obj_end - obj_start);
-                response.jobs.push_back(parse_fine_tuning_job(job_json));
+                response.data.push_back(parse_fine_tuning_job(job_json));
                 
                 current_pos = obj_end;
                 auto next_comma = json_str.find(",", current_pos);

@@ -25,15 +25,15 @@ asio::awaitable<void> embedding_example(openai::Client& client) {
     try {
         auto response = co_await client.create_embedding(request);
         
-        if (response.is_error) {
-            fmt::print("Error: {}\n\n", response.error_message);
+        if (!response.has_value()) {
+            fmt::print("Error: {}\n\n", response.error().to_string());
             co_return;
         }
         
         fmt::print("✓ Embedding created successfully\n\n");
         
-        if (!response.data.empty()) {
-            const auto& embedding = response.data[0].embedding;
+        if (!response.value().data.empty()) {
+            const auto& embedding = response.value().data[0].embedding;
             
             fmt::print("Embedding vector:\n");
             fmt::print("  Total dimensions: {}\n", embedding.size());
@@ -48,7 +48,7 @@ asio::awaitable<void> embedding_example(openai::Client& client) {
         }
         
         fmt::print("Usage:\n");
-        fmt::print("  Total tokens: {}\n\n", response.usage.total_tokens);
+        fmt::print("  Total tokens: {}\n\n", response.value().usage.total_tokens);
         
         fmt::print(R"(
 Use cases:

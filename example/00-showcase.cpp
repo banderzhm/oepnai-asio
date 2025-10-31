@@ -23,8 +23,10 @@ asio::awaitable<void> showcase_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_chat_completion(req);
-            if (!response.is_error && !response.choices.empty()) {
-                fmt::print("   Response: {}\n\n", response.choices[0].message.content);
+            if (response.has_value() && !response.value().choices.empty()) {
+                fmt::print("   Response: {}\n\n", response.value().choices[0].message.content);
+            } else if (!response.has_value()) {
+                fmt::print("   Error: {}\n\n", response.error().to_string());
             }
         } catch (const std::exception& e) {
             fmt::print("   Error: {}\n\n", e.what());
@@ -43,7 +45,11 @@ asio::awaitable<void> showcase_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_completion(req);
-            fmt::print("   Response: {}\n\n", response.substr(0, 100));
+            if (response.has_value()) {
+                fmt::print("   Response: {}\n\n", response.value().substr(0, 100));
+            } else {
+                fmt::print("   Error: {}\n\n", response.error().to_string());
+            }
         } catch (const std::exception& e) {
             fmt::print("   Error: {}\n\n", e.what());
         }

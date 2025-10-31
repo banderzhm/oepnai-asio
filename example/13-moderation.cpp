@@ -44,15 +44,15 @@ Categories checked:
         try {
             auto moderation = co_await client.create_moderation(request);
             
-            if (moderation.is_error) {
-                fmt::print("Error: {}\n\n", moderation.error_message);
+            if (!moderation.has_value()) {
+                fmt::print("Error: {}\n\n", moderation.error().to_string());
                 continue;
             }
             
-            fmt::print("Model: {}\n", moderation.model);
+            fmt::print("Model: {}\n", moderation.value().model);
             fmt::print("Results:\n");
             
-            for (const auto& result : moderation.results) {
+            for (const auto& result : moderation.value().results) {
                 fmt::print("  Flagged: {}\n\n", result.flagged ? "YES" : "NO");
                 
                 if (result.flagged) {

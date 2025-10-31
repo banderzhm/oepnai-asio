@@ -28,8 +28,8 @@ Max file size: 25 MB
     try {
         auto transcription = co_await client.create_transcription(transcription_req);
         
-        if (transcription.is_error) {
-            fmt::print("Note: {}\n\n", transcription.error_message);
+        if (!transcription.has_value()) {
+            fmt::print("Note: {}\n\n", transcription.error().to_string());
             fmt::print(R"(To use this feature, you would need to:
   1. Implement multipart/form-data file upload in the HTTP client
   2. Read the audio file from disk
@@ -52,7 +52,7 @@ Example request would be:
 
 )");
         } else {
-            fmt::print("Transcription:\n{}\n\n", transcription.text);
+            fmt::print("Transcription:\n{}\n\n", transcription.value().text);
         }
     } catch (const std::exception& e) {
         fmt::print("Error: {}\n\n", e.what());
@@ -70,10 +70,10 @@ Example request would be:
     try {
         auto translation = co_await client.create_translation(translation_req);
         
-        if (translation.is_error) {
-            fmt::print("Note: {}\n\n", translation.error_message);
+        if (!translation.has_value()) {
+            fmt::print("Note: {}\n\n", translation.error().to_string());
         } else {
-            fmt::print("Translation:\n{}\n\n", translation.text);
+            fmt::print("Translation:\n{}\n\n", translation.value().text);
         }
     } catch (const std::exception& e) {
         fmt::print("Error: {}\n\n", e.what());

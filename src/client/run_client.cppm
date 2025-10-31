@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.run;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create run
-    asio::awaitable<Run> create_run(
+    asio::awaitable<std::expected<Run, ApiError>> create_run(
         const std::string& thread_id,
         const CreateRunRequest& request
     ) {
@@ -34,20 +35,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Run run;
-        
         if (response.is_error) {
-            run.is_error = true;
-            run.error_message = response.error_message;
-            co_return run;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        run = parse_run(response.body);
-        co_return run;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run(response.body);
     }
 
     // List runs
-    asio::awaitable<RunListResponse> list_runs(
+    asio::awaitable<std::expected<RunListResponse, ApiError>> list_runs(
         const std::string& thread_id,
         int limit = 20
     ) {
@@ -62,20 +63,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        RunListResponse list_response;
-        
         if (response.is_error) {
-            list_response.is_error = true;
-            list_response.error_message = response.error_message;
-            co_return list_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        list_response = parse_run_list_response(response.body);
-        co_return list_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run_list_response(response.body);
     }
 
     // Retrieve run
-    asio::awaitable<Run> retrieve_run(
+    asio::awaitable<std::expected<Run, ApiError>> retrieve_run(
         const std::string& thread_id,
         const std::string& run_id
     ) {
@@ -90,20 +91,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Run run;
-        
         if (response.is_error) {
-            run.is_error = true;
-            run.error_message = response.error_message;
-            co_return run;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        run = parse_run(response.body);
-        co_return run;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run(response.body);
     }
 
     // Modify run
-    asio::awaitable<Run> modify_run(
+    asio::awaitable<std::expected<Run, ApiError>> modify_run(
         const std::string& thread_id,
         const std::string& run_id,
         const ModifyRunRequest& request
@@ -120,20 +121,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Run run;
-        
         if (response.is_error) {
-            run.is_error = true;
-            run.error_message = response.error_message;
-            co_return run;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        run = parse_run(response.body);
-        co_return run;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run(response.body);
     }
 
     // Cancel run
-    asio::awaitable<Run> cancel_run(
+    asio::awaitable<std::expected<Run, ApiError>> cancel_run(
         const std::string& thread_id,
         const std::string& run_id
     ) {
@@ -148,20 +149,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Run run;
-        
         if (response.is_error) {
-            run.is_error = true;
-            run.error_message = response.error_message;
-            co_return run;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        run = parse_run(response.body);
-        co_return run;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run(response.body);
     }
 
     // Submit tool outputs to run
-    asio::awaitable<Run> submit_tool_outputs(
+    asio::awaitable<std::expected<Run, ApiError>> submit_tool_outputs(
         const std::string& thread_id,
         const std::string& run_id,
         const SubmitToolOutputsRequest& request
@@ -178,20 +179,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Run run;
-        
         if (response.is_error) {
-            run.is_error = true;
-            run.error_message = response.error_message;
-            co_return run;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        run = parse_run(response.body);
-        co_return run;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run(response.body);
     }
 
     // List run steps
-    asio::awaitable<RunStepListResponse> list_run_steps(
+    asio::awaitable<std::expected<RunStepListResponse, ApiError>> list_run_steps(
         const std::string& thread_id,
         const std::string& run_id,
         int limit = 20
@@ -207,20 +208,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        RunStepListResponse list_response;
-        
         if (response.is_error) {
-            list_response.is_error = true;
-            list_response.error_message = response.error_message;
-            co_return list_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        list_response = parse_run_step_list_response(response.body);
-        co_return list_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run_step_list_response(response.body);
     }
 
     // Retrieve run step
-    asio::awaitable<RunStep> retrieve_run_step(
+    asio::awaitable<std::expected<RunStep, ApiError>> retrieve_run_step(
         const std::string& thread_id,
         const std::string& run_id,
         const std::string& step_id
@@ -236,16 +237,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        RunStep step;
-        
         if (response.is_error) {
-            step.is_error = true;
-            step.error_message = response.error_message;
-            co_return step;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        step = parse_run_step(response.body);
-        co_return step;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_run_step(response.body);
     }
 
 private:
@@ -285,7 +286,8 @@ private:
             status_pos += 9;
             auto status_start = json_str.find("\"", status_pos) + 1;
             auto status_end = json_str.find("\"", status_start);
-            run.status = json_str.substr(status_start, status_end - status_start);
+            auto status_str = json_str.substr(status_start, status_end - status_start);
+            run.status = string_to_run_status(status_str);
         }
         
         // Parse model

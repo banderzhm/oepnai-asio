@@ -89,3 +89,60 @@ struct DeleteAssistantResponse {
 
 } // namespace openai
 
+// ============================================================================
+// Implementation
+// ============================================================================
+
+namespace openai {
+
+// CreateAssistantRequest::to_json implementation
+std::string CreateAssistantRequest::to_json() const {
+    std::ostringstream json;
+    json << "{";
+    json << "\"model\":\"" << model << "\"";
+    
+    if (name) {
+        json << ",\"name\":\"" << *name << "\"";
+    }
+    if (description) {
+        json << ",\"description\":\"" << *description << "\"";
+    }
+    if (instructions) {
+        json << ",\"instructions\":\"" << *instructions << "\"";
+    }
+    
+    json << "}";
+    return json.str();
+}
+
+// ModifyAssistantRequest::to_json implementation
+std::string ModifyAssistantRequest::to_json() const {
+    std::ostringstream json;
+    json << "{";
+    bool first = true;
+    
+    if (model) {
+        json << "\"model\":\"" << *model << "\"";
+        first = false;
+    }
+    if (name) {
+        if (!first) json << ",";
+        json << "\"name\":\"" << *name << "\"";
+        first = false;
+    }
+    if (description) {
+        if (!first) json << ",";
+        json << "\"description\":\"" << *description << "\"";
+        first = false;
+    }
+    if (instructions) {
+        if (!first) json << ",";
+        json << "\"instructions\":\"" << *instructions << "\"";
+    }
+    
+    json << "}";
+    return json.str();
+}
+
+} // namespace openai
+

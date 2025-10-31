@@ -18,16 +18,20 @@ asio::awaitable<void> models_example(openai::Client& client) {
     fmt::print("--- Example 1: List All Models ---\n");
     try {
         auto models = co_await client.list_models();
-        fmt::print("Found {} models:\n\n", models.data.size());
-        
-        // Show first 10 models
-        int count = 0;
-        for (const auto& model : models.data) {
-            if (count++ >= 10) {
-                fmt::print("... and {} more models\n\n", models.data.size() - 10);
-                break;
+        if (models.has_value()) {
+            fmt::print("Found {} models:\n\n", models.value().data.size());
+            
+            // Show first 10 models
+            int count = 0;
+            for (const auto& model : models.value().data) {
+                if (count++ >= 10) {
+                    fmt::print("... and {} more models\n\n", models.value().data.size() - 10);
+                    break;
+                }
+                fmt::print("  • {} (owned by: {})\n", model.id, model.owned_by);
             }
-            fmt::print("  • {} (owned by: {})\n", model.id, model.owned_by);
+        } else {
+            fmt::print("Error listing models: {}\n\n", models.error().to_string());
         }
     } catch (const std::exception& e) {
         fmt::print("Error listing models: {}\n\n", e.what());
@@ -37,9 +41,13 @@ asio::awaitable<void> models_example(openai::Client& client) {
     fmt::print("--- Example 2: Retrieve Specific Model ---\n");
     try {
         auto model = co_await client.retrieve_model("gpt-3.5-turbo");
-        fmt::print("Model ID: {}\n", model.id);
-        fmt::print("Owned by: {}\n", model.owned_by);
-        fmt::print("Object type: {}\n\n", model.object);
+        if (model.has_value()) {
+            fmt::print("Model ID: {}\n", model.value().id);
+            fmt::print("Owned by: {}\n", model.value().owned_by);
+            fmt::print("Object type: {}\n\n", model.value().object);
+        } else {
+            fmt::print("Error retrieving model: {}\n\n", model.error().to_string());
+        }
     } catch (const std::exception& e) {
         fmt::print("Error retrieving model: {}\n\n", e.what());
     }

@@ -28,8 +28,8 @@ asio::awaitable<void> system_role_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_chat_completion(request);
-            if (!response.is_error && !response.choices.empty()) {
-                fmt::print("Pirate: {}\n\n", response.choices[0].message.content);
+            if (response.has_value() && !response.value().choices.empty()) {
+                fmt::print("Pirate: {}\n\n", response.value().choices[0].message.content);
             }
         } catch (const std::exception& e) {
             fmt::print("Exception: {}\n", e.what());
@@ -55,8 +55,8 @@ asio::awaitable<void> system_role_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_chat_completion(request);
-            if (!response.is_error && !response.choices.empty()) {
-                fmt::print("JSON Response:\n{}\n\n", response.choices[0].message.content);
+            if (response.has_value() && !response.value().choices.empty()) {
+                fmt::print("JSON Response:\n{}\n\n", response.value().choices[0].message.content);
             }
         } catch (const std::exception& e) {
             fmt::print("Exception: {}\n", e.what());
@@ -82,8 +82,8 @@ asio::awaitable<void> system_role_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_chat_completion(request);
-            if (!response.is_error && !response.choices.empty()) {
-                fmt::print("Expert: {}\n", response.choices[0].message.content);
+            if (response.has_value() && !response.value().choices.empty()) {
+                fmt::print("Expert: {}\n", response.value().choices[0].message.content);
             }
         } catch (const std::exception& e) {
             fmt::print("Exception: {}\n", e.what());

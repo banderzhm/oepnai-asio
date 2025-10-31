@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.thread;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -22,7 +23,7 @@ public:
     // ========================================================================
 
     // Create thread
-    asio::awaitable<Thread> create_thread(const CreateThreadRequest& request) {
+    asio::awaitable<std::expected<Thread, ApiError>> create_thread(const CreateThreadRequest& request) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -35,20 +36,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Thread thread;
-        
         if (response.is_error) {
-            thread.is_error = true;
-            thread.error_message = response.error_message;
-            co_return thread;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        thread = parse_thread(response.body);
-        co_return thread;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_thread(response.body);
     }
 
     // Retrieve thread
-    asio::awaitable<Thread> retrieve_thread(const std::string& thread_id) {
+    asio::awaitable<std::expected<Thread, ApiError>> retrieve_thread(const std::string& thread_id) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -60,20 +61,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Thread thread;
-        
         if (response.is_error) {
-            thread.is_error = true;
-            thread.error_message = response.error_message;
-            co_return thread;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        thread = parse_thread(response.body);
-        co_return thread;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_thread(response.body);
     }
 
     // Modify thread
-    asio::awaitable<Thread> modify_thread(
+    asio::awaitable<std::expected<Thread, ApiError>> modify_thread(
         const std::string& thread_id,
         const ModifyThreadRequest& request
     ) {
@@ -89,20 +90,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Thread thread;
-        
         if (response.is_error) {
-            thread.is_error = true;
-            thread.error_message = response.error_message;
-            co_return thread;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        thread = parse_thread(response.body);
-        co_return thread;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_thread(response.body);
     }
 
     // Delete thread
-    asio::awaitable<DeleteThreadResponse> delete_thread(const std::string& thread_id) {
+    asio::awaitable<std::expected<DeleteThreadResponse, ApiError>> delete_thread(const std::string& thread_id) {
         http::Request req;
         req.method = "DELETE";
         req.host = "api.openai.com";
@@ -114,13 +115,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        DeleteThreadResponse delete_response;
-        
         if (response.is_error) {
-            delete_response.is_error = true;
-            delete_response.error_message = response.error_message;
-            co_return delete_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
+        
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        DeleteThreadResponse delete_response;
         
         // Parse id
         auto id_pos = response.body.find("\"id\":");
@@ -142,7 +146,7 @@ public:
     // ========================================================================
 
     // Create message
-    asio::awaitable<Message> create_message(
+    asio::awaitable<std::expected<ThreadMessage, ApiError>> create_message(
         const std::string& thread_id,
         const CreateMessageRequest& request
     ) {
@@ -158,20 +162,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Message message;
-        
         if (response.is_error) {
-            message.is_error = true;
-            message.error_message = response.error_message;
-            co_return message;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        message = parse_message(response.body);
-        co_return message;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_message(response.body);
     }
 
     // List messages
-    asio::awaitable<MessageListResponse> list_messages(
+    asio::awaitable<std::expected<ThreadMessageListResponse, ApiError>> list_messages(
         const std::string& thread_id,
         int limit = 20
     ) {
@@ -186,20 +190,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        MessageListResponse list_response;
-        
         if (response.is_error) {
-            list_response.is_error = true;
-            list_response.error_message = response.error_message;
-            co_return list_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        list_response = parse_message_list_response(response.body);
-        co_return list_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_message_list_response(response.body);
     }
 
     // Retrieve message
-    asio::awaitable<Message> retrieve_message(
+    asio::awaitable<std::expected<ThreadMessage, ApiError>> retrieve_message(
         const std::string& thread_id,
         const std::string& message_id
     ) {
@@ -214,20 +218,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Message message;
-        
         if (response.is_error) {
-            message.is_error = true;
-            message.error_message = response.error_message;
-            co_return message;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        message = parse_message(response.body);
-        co_return message;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_message(response.body);
     }
 
     // Modify message
-    asio::awaitable<Message> modify_message(
+    asio::awaitable<std::expected<ThreadMessage, ApiError>> modify_message(
         const std::string& thread_id,
         const std::string& message_id,
         const ModifyMessageRequest& request
@@ -244,16 +248,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Message message;
-        
         if (response.is_error) {
-            message.is_error = true;
-            message.error_message = response.error_message;
-            co_return message;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        message = parse_message(response.body);
-        co_return message;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_message(response.body);
     }
 
 private:
@@ -280,8 +284,8 @@ private:
         return thread;
     }
 
-    Message parse_message(const std::string& json_str) {
-        Message message;
+    ThreadMessage parse_message(const std::string& json_str) {
+        ThreadMessage message;
         
         // Parse id
         auto id_pos = json_str.find("\"id\":");
@@ -307,7 +311,8 @@ private:
             role_pos += 7;
             auto role_start = json_str.find("\"", role_pos) + 1;
             auto role_end = json_str.find("\"", role_start);
-            message.role = json_str.substr(role_start, role_end - role_start);
+            auto role_str = json_str.substr(role_start, role_end - role_start);
+            message.role = string_to_thread_message_role(role_str);
         }
         
         // Parse created_at
@@ -321,8 +326,8 @@ private:
         return message;
     }
 
-    MessageListResponse parse_message_list_response(const std::string& json_str) {
-        MessageListResponse response;
+    ThreadMessageListResponse parse_message_list_response(const std::string& json_str) {
+        ThreadMessageListResponse response;
         
         // Parse data array
         auto data_pos = json_str.find("\"data\":[");

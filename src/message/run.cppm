@@ -24,6 +24,19 @@ enum class RunStatus {
     Expired
 };
 
+// Helper function to convert string to RunStatus
+inline RunStatus string_to_run_status(const std::string& status_str) {
+    if (status_str == "queued") return RunStatus::Queued;
+    if (status_str == "in_progress") return RunStatus::InProgress;
+    if (status_str == "requires_action") return RunStatus::RequiresAction;
+    if (status_str == "cancelling") return RunStatus::Cancelling;
+    if (status_str == "cancelled") return RunStatus::Cancelled;
+    if (status_str == "failed") return RunStatus::Failed;
+    if (status_str == "completed") return RunStatus::Completed;
+    if (status_str == "expired") return RunStatus::Expired;
+    return RunStatus::Queued;  // Default
+}
+
 // Run object
 struct Run {
     std::string id;
@@ -60,6 +73,19 @@ struct CreateRunRequest {
 // Modify run request
 struct ModifyRunRequest {
     std::optional<std::map<std::string, std::string>> metadata;
+    
+    std::string to_json() const;
+};
+
+// Tool output for submit
+struct ToolOutput {
+    std::string tool_call_id;
+    std::string output;
+};
+
+// Submit tool outputs request
+struct SubmitToolOutputsRequest {
+    std::vector<ToolOutput> tool_outputs;
     
     std::string to_json() const;
 };
@@ -101,3 +127,49 @@ struct RunStepListResponse {
 
 } // namespace openai
 
+// ============================================================================
+// Implementation
+// ============================================================================
+
+namespace openai {
+
+// CreateRunRequest::to_json implementation
+std::string CreateRunRequest::to_json() const {
+    std::ostringstream json;
+    json << "{";
+    json << "\"assistant_id\":\"" << assistant_id << "\"";
+    
+    if (model) {
+        json << ",\"model\":\"" << *model << "\"";
+    }
+    if (instructions) {
+        json << ",\"instructions\":\"" << *instructions << "\"";
+    }
+    
+    json << "}";
+    return json.str();
+}
+
+// ModifyRunRequest::to_json implementation
+std::string ModifyRunRequest::to_json() const {
+    return "{}";  // Empty object for now
+}
+
+// SubmitToolOutputsRequest::to_json implementation
+std::string SubmitToolOutputsRequest::to_json() const {
+    std::ostringstream json;
+    json << "{\"tool_outputs\":[";
+    
+    for (std::size_t i = 0; i < tool_outputs.size(); ++i) {
+        if (i > 0) json << ",";
+        json << "{";
+        json << "\"tool_call_id\":\"" << tool_outputs[i].tool_call_id << "\",";
+        json << "\"output\":\"" << tool_outputs[i].output << "\"";
+        json << "}";
+    }
+    
+    json << "]}";
+    return json.str();
+}
+
+} // namespace openai

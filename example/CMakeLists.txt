@@ -25,6 +25,25 @@ add_openai_example(11-fine-tune)
 add_openai_example(12-audio)
 add_openai_example(13-moderation)
 
+# Create a target to build all examples at once
+add_custom_target(all_examples
+    DEPENDS
+        00-showcase
+        01-chat
+        02-chat-conversation
+        03-chat-system-role
+        04-http-test
+        05-model
+        06-completion
+        07-edit
+        08-image
+        09-embedding
+        10-file
+        11-fine-tune
+        12-audio
+        13-moderation
+)
+
 message(STATUS "==========================================")
 message(STATUS "Examples configured:")
 message(STATUS "  - 00-showcase          : API showcase overview")

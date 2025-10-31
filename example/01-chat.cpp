@@ -26,24 +26,24 @@ asio::awaitable<void> chat_example(openai::Client& client) {
     try {
         auto response = co_await client.create_chat_completion(request);
         
-        if (response.is_error) {
-            fmt::print("Error: {}\n", response.error_message);
+        if (!response.has_value()) {
+            fmt::print("Error: {}\n", response.error().to_string());
             co_return;
         }
         
         fmt::print("\nResponse:\n");
-        fmt::print("  ID: {}\n", response.id);
-        fmt::print("  Model: {}\n", response.model);
+        fmt::print("  ID: {}\n", response.value().id);
+        fmt::print("  Model: {}\n", response.value().model);
         fmt::print("\n");
         
-        if (!response.choices.empty()) {
-            fmt::print("Assistant: {}\n\n", response.choices[0].message.content);
+        if (!response.value().choices.empty()) {
+            fmt::print("Assistant: {}\n\n", response.value().choices[0].message.content);
         }
         
         fmt::print("Usage:\n");
-        fmt::print("  Prompt tokens: {}\n", response.usage.prompt_tokens);
-        fmt::print("  Completion tokens: {}\n", response.usage.completion_tokens);
-        fmt::print("  Total tokens: {}\n", response.usage.total_tokens);
+        fmt::print("  Prompt tokens: {}\n", response.value().usage.prompt_tokens);
+        fmt::print("  Completion tokens: {}\n", response.value().usage.completion_tokens);
+        fmt::print("  Total tokens: {}\n", response.value().usage.total_tokens);
         
     } catch (const std::exception& e) {
         fmt::print("Exception: {}\n", e.what());

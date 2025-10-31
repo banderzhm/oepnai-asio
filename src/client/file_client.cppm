@@ -168,9 +168,8 @@ public:
 
 private:
     FileUploadResponse parse_file_upload_response(const std::string& json_str) {
-        FileUploadResponse response;
-        response.file = parse_file_object(json_str);
-        return response;
+        // FileUploadResponse is an alias for FileObject
+        return parse_file_object(json_str);
     }
 
     FileObject parse_file_object(const std::string& json_str) {

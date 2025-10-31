@@ -21,14 +21,14 @@ asio::awaitable<void> files_example(openai::Client& client) {
     try {
         auto file_list = co_await client.list_files();
         
-        if (file_list.is_error) {
-            fmt::print("Error: {}\n\n", file_list.error_message);
+        if (!file_list.has_value()) {
+            fmt::print("Error: {}\n\n", file_list.error().to_string());
         } else {
-            if (file_list.data.empty()) {
+            if (file_list.value().data.empty()) {
                 fmt::print("No files found.\n\n");
             } else {
-                fmt::print("Files ({} total):\n", file_list.data.size());
-                for (const auto& file : file_list.data) {
+                fmt::print("Files ({} total):\n", file_list.value().data.size());
+                for (const auto& file : file_list.value().data) {
                     fmt::print("  ID: {}\n", file.id);
                     fmt::print("  Filename: {}\n", file.filename);
                     fmt::print("  Purpose: {}\n", file.purpose);
@@ -40,31 +40,30 @@ asio::awaitable<void> files_example(openai::Client& client) {
             }
         }
         
-        fmt::print(R"(File Upload Example:
-  openai::FileUploadRequest upload_req;
-  upload_req.file_path = "training_data.jsonl";
-  upload_req.purpose = "fine-tune";
-  auto upload_resp = co_await client.upload_file(upload_req);
-
-File Format (JSONL for fine-tuning):
-  {"prompt": "<prompt>", "completion": "<completion>"}
-  {"prompt": "<prompt>", "completion": "<completion>"}
-  ...
-
-Supported purposes:
-  - fine-tune: For creating fine-tuned models
-  - assistants: For use with Assistants API
-
-File size limits:
-  - Maximum file size: 512 MB
-  - Supported formats: .jsonl, .json, .txt, .pdf, etc.
-
-Operations available:
-  - client.upload_file(request)    // Upload a file
-  - client.list_files()            // List all files
-  - client.retrieve_file(file_id)  // Get file info
-  - client.delete_file(file_id)    // Delete a file
-)");
+        fmt::print("File Upload Example:\n");
+        fmt::print("  openai::FileUploadRequest upload_req;\n");
+        fmt::print("  upload_req.file_path = \"training_data.jsonl\";\n");
+        fmt::print("  upload_req.purpose = \"fine-tune\";\n");
+        fmt::print("  auto upload_resp = co_await client.upload_file(upload_req);\n\n");
+        
+        fmt::print("File Format (JSONL for fine-tuning):\n");
+        fmt::print("  {{\"prompt\": \"<prompt>\", \"completion\": \"<completion>\"}}\n");
+        fmt::print("  {{\"prompt\": \"<prompt>\", \"completion\": \"<completion>\"}}\n");
+        fmt::print("  ...\n\n");
+        
+        fmt::print("Supported purposes:\n");
+        fmt::print("  - fine-tune: For creating fine-tuned models\n");
+        fmt::print("  - assistants: For use with Assistants API\n\n");
+        
+        fmt::print("File size limits:\n");
+        fmt::print("  - Maximum file size: 512 MB\n");
+        fmt::print("  - Supported formats: .jsonl, .json, .txt, .pdf, etc.\n\n");
+        
+        fmt::print("Operations available:\n");
+        fmt::print("  - client.upload_file(request)    // Upload a file\n");
+        fmt::print("  - client.list_files()            // List all files\n");
+        fmt::print("  - client.retrieve_file(file_id)  // Get file info\n");
+        fmt::print("  - client.delete_file(file_id)    // Delete a file\n");
         
     } catch (const std::exception& e) {
         fmt::print("Exception: {}\n", e.what());

@@ -24,7 +24,11 @@ asio::awaitable<void> completion_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_completion(req);
-            fmt::print("Completion: {}\n\n", response);
+            if (response.has_value()) {
+                fmt::print("Completion: {}\n\n", response.value());
+            } else {
+                fmt::print("Error: {}\n\n", response.error().to_string());
+            }
         } catch (const std::exception& e) {
             fmt::print("Error: {}\n\n", e.what());
         }
@@ -43,7 +47,11 @@ asio::awaitable<void> completion_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_completion(req);
-            fmt::print("Story: {}\n\n", response);
+            if (response.has_value()) {
+                fmt::print("Story: {}\n\n", response.value());
+            } else {
+                fmt::print("Error: {}\n\n", response.error().to_string());
+            }
         } catch (const std::exception& e) {
             fmt::print("Error: {}\n\n", e.what());
         }
@@ -62,7 +70,11 @@ asio::awaitable<void> completion_example(openai::Client& client) {
         
         try {
             auto response = co_await client.create_completion(req);
-            fmt::print("Completed code:\n{}\n", response);
+            if (response.has_value()) {
+                fmt::print("Completed code:\n{}\n", response.value());
+            } else {
+                fmt::print("Error: {}\n", response.error().to_string());
+            }
         } catch (const std::exception& e) {
             fmt::print("Error: {}\n", e.what());
         }

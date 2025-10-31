@@ -8,6 +8,7 @@ import fmt;
 import openai.client.base;
 import openai.http_client;
 import openai.types.assistant;
+import openai.types.common;
 import std;
 
 export namespace openai::client {
@@ -18,7 +19,7 @@ public:
     using BaseClient::BaseClient;
 
     // Create assistant
-    asio::awaitable<Assistant> create_assistant(const CreateAssistantRequest& request) {
+    asio::awaitable<std::expected<Assistant, ApiError>> create_assistant(const CreateAssistantRequest& request) {
         http::Request req;
         req.method = "POST";
         req.host = "api.openai.com";
@@ -31,20 +32,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Assistant assistant;
-        
         if (response.is_error) {
-            assistant.is_error = true;
-            assistant.error_message = response.error_message;
-            co_return assistant;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        assistant = parse_assistant(response.body);
-        co_return assistant;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_assistant(response.body);
     }
 
     // List assistants
-    asio::awaitable<AssistantListResponse> list_assistants(int limit = 20) {
+    asio::awaitable<std::expected<AssistantListResponse, ApiError>> list_assistants(int limit = 20) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -56,20 +57,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        AssistantListResponse list_response;
-        
         if (response.is_error) {
-            list_response.is_error = true;
-            list_response.error_message = response.error_message;
-            co_return list_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        list_response = parse_assistant_list_response(response.body);
-        co_return list_response;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_assistant_list_response(response.body);
     }
 
     // Retrieve assistant
-    asio::awaitable<Assistant> retrieve_assistant(const std::string& assistant_id) {
+    asio::awaitable<std::expected<Assistant, ApiError>> retrieve_assistant(const std::string& assistant_id) {
         http::Request req;
         req.method = "GET";
         req.host = "api.openai.com";
@@ -81,20 +82,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Assistant assistant;
-        
         if (response.is_error) {
-            assistant.is_error = true;
-            assistant.error_message = response.error_message;
-            co_return assistant;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        assistant = parse_assistant(response.body);
-        co_return assistant;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_assistant(response.body);
     }
 
     // Modify assistant
-    asio::awaitable<Assistant> modify_assistant(
+    asio::awaitable<std::expected<Assistant, ApiError>> modify_assistant(
         const std::string& assistant_id,
         const ModifyAssistantRequest& request
     ) {
@@ -110,20 +111,20 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        Assistant assistant;
-        
         if (response.is_error) {
-            assistant.is_error = true;
-            assistant.error_message = response.error_message;
-            co_return assistant;
+            co_return std::unexpected(ApiError(response.error_message));
         }
         
-        assistant = parse_assistant(response.body);
-        co_return assistant;
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        co_return parse_assistant(response.body);
     }
 
     // Delete assistant
-    asio::awaitable<DeleteAssistantResponse> delete_assistant(const std::string& assistant_id) {
+    asio::awaitable<std::expected<DeleteAssistantResponse, ApiError>> delete_assistant(const std::string& assistant_id) {
         http::Request req;
         req.method = "DELETE";
         req.host = "api.openai.com";
@@ -135,13 +136,16 @@ public:
         
         auto response = co_await http_client_.async_request(req);
         
-        DeleteAssistantResponse delete_response;
-        
         if (response.is_error) {
-            delete_response.is_error = true;
-            delete_response.error_message = response.error_message;
-            co_return delete_response;
+            co_return std::unexpected(ApiError(response.error_message));
         }
+        
+        if (response.status_code != 200) {
+            co_return std::unexpected(ApiError(response.status_code,
+                fmt::format("HTTP {}: {}", response.status_code, response.body)));
+        }
+        
+        DeleteAssistantResponse delete_response;
         
         // Parse id
         auto id_pos = response.body.find("\"id\":");
