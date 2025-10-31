@@ -121,8 +121,23 @@ openai-asio/
 │   ├── openai.cppm                 # Main module (single import point)
 │   ├── openai-types.cppm           # Type definitions module
 │   ├── openai-http_client.cppm/.cpp # HTTP client module
-│   ├── openai-client.cppm/.cpp     # OpenAI API client module
+│   ├── client/                     # API client modules
+│   │   ├── base_client.cppm        # Base client with common functionality
+│   │   ├── unified_client.cppm     # Unified client (composition pattern)
+│   │   ├── chat_client.cppm        # Chat Completions API
+│   │   ├── completion_client.cppm  # Completions API (legacy)
+│   │   ├── model_client.cppm       # Models API
+│   │   ├── image_client.cppm       # Images API
+│   │   ├── embedding_client.cppm   # Embeddings API
+│   │   ├── file_client.cppm        # Files API
+│   │   ├── fine_tuning_client.cppm # Fine-tuning API
+│   │   ├── audio_client.cppm       # Audio API (Whisper)
+│   │   ├── moderation_client.cppm  # Moderation API
+│   │   ├── assistant_client.cppm   # Assistants API (Beta)
+│   │   ├── thread_client.cppm      # Threads API (Beta)
+│   │   └── run_client.cppm         # Runs API (Beta)
 │   └── message/                    # Type definition sub-modules
+│       ├── common.cppm             # Common types (ApiError, std::expected)
 │       ├── chat.cppm               # Chat-related types
 │       ├── completion.cppm         # Completion-related types
 │       ├── model.cppm              # Model-related types
@@ -132,8 +147,11 @@ openai-asio/
 │       ├── fine_tuning.cppm        # Fine-tuning-related types
 │       ├── audio.cppm              # Audio-related types
 │       ├── moderation.cppm         # Moderation-related types
-│       └── common.cppm             # Common utility functions
+│       ├── assistant.cppm          # Assistant-related types (Beta)
+│       ├── thread.cppm             # Thread-related types (Beta)
+│       └── run.cppm                # Run-related types (Beta)
 ├── example/                        # Example programs
+│   └── CMakeLists.txt              # all_examples target for batch compilation
 ├── 3rdparty/                       # Third-party libraries
 │   ├── asio/                       # Asio async I/O
 │   ├── fmt/                        # Formatting library

@@ -121,8 +121,23 @@ openai-asio/
 │   ├── openai.cppm                 # 主模块（单一导入点）
 │   ├── openai-types.cppm           # 类型定义模块
 │   ├── openai-http_client.cppm/.cpp # HTTP 客户端模块
-│   ├── openai-client.cppm/.cpp     # OpenAI API 客户端模块
+│   ├── client/                     # API 客户端模块
+│   │   ├── base_client.cppm        # 基础客户端（公共功能）
+│   │   ├── unified_client.cppm     # 统一客户端（组合模式）
+│   │   ├── chat_client.cppm        # Chat Completions API
+│   │   ├── completion_client.cppm  # Completions API (legacy)
+│   │   ├── model_client.cppm       # Models API
+│   │   ├── image_client.cppm       # Images API
+│   │   ├── embedding_client.cppm   # Embeddings API
+│   │   ├── file_client.cppm        # Files API
+│   │   ├── fine_tuning_client.cppm # Fine-tuning API
+│   │   ├── audio_client.cppm       # Audio API (Whisper)
+│   │   ├── moderation_client.cppm  # Moderation API
+│   │   ├── assistant_client.cppm   # Assistants API (Beta)
+│   │   ├── thread_client.cppm      # Threads API (Beta)
+│   │   └── run_client.cppm         # Runs API (Beta)
 │   └── message/                    # 类型定义子模块
+│       ├── common.cppm             # 通用类型（ApiError, std::expected）
 │       ├── chat.cppm               # 聊天相关类型
 │       ├── completion.cppm         # 补全相关类型
 │       ├── model.cppm              # 模型相关类型
@@ -132,13 +147,17 @@ openai-asio/
 │       ├── fine_tuning.cppm        # 微调相关类型
 │       ├── audio.cppm              # 音频相关类型
 │       ├── moderation.cppm         # 审核相关类型
-│       └── common.cppm             # 公共工具函数
+│       ├── assistant.cppm          # 助手相关类型 (Beta)
+│       ├── thread.cppm             # 线程相关类型 (Beta)
+│       └── run.cppm                # 运行相关类型 (Beta)
 ├── example/                        # 示例程序
+│   └── CMakeLists.txt              # all_examples 批量编译目标
 ├── 3rdparty/                       # 第三方库
 │   ├── asio/                       # Asio 异步 I/O
 │   ├── fmt/                        # 格式化库
 │   └── nlohmann_json/              # JSON 库
-└── CMakeLists.txt                  # CMake 配置
+├── CMakeLists.txt                  # CMake 配置
+└── LICENSE                         # MIT 许可证
 ```
 
 ## 🔧 模块化架构
